@@ -1,0 +1,84 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yane-svn] r15 - /
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yane-svn/2006-June/index.html" >
+   <LINK REL="made" HREF="mailto:yane-svn%40lists.berlios.de?Subject=Re%3A%20%5BYane-svn%5D%20r15%20-%20/&In-Reply-To=%3C200606251858.k5PIwd4n025526%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000000.html">
+   <LINK REL="Next"  HREF="000002.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yane-svn] r15 - /</H1>
+    <B>rramthun at BerliOS</B> 
+    <A HREF="mailto:yane-svn%40lists.berlios.de?Subject=Re%3A%20%5BYane-svn%5D%20r15%20-%20/&In-Reply-To=%3C200606251858.k5PIwd4n025526%40sheep.berlios.de%3E"
+       TITLE="[Yane-svn] r15 - /">rramthun at berlios.de
+       </A><BR>
+    <I>Sun Jun 25 20:58:39 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000000.html">[Yane-svn] r14 - config/emails
+</A></li>
+        <LI>Next message: <A HREF="000002.html">[Yane-svn] r16 - / config generic_errors manage/forgot_pwd manage/subscriptions
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1">[ date ]</a>
+              <a href="thread.html#1">[ thread ]</a>
+              <a href="subject.html#1">[ subject ]</a>
+              <a href="author.html#1">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: rramthun
+Date: 2006-06-25 20:58:38 +0200 (Sun, 25 Jun 2006)
+New Revision: 15
+
+Modified:
+   functions.php
+Log:
+Zweiter Test...
+
+Modified: functions.php
+===================================================================
+--- functions.php	2006-06-25 18:37:43 UTC (rev 14)
++++ functions.php	2006-06-25 18:58:38 UTC (rev 15)
+@@ -48,7 +48,7 @@
+     #Sends a mail-template to the given address. $topic must be name of template.
+     function send_mail($mailaddress, $topic, $a=&quot;&quot;, $b=&quot;&quot;, $c=&quot;&quot;, $d=&quot;&quot;)
+     {
+-    $fp = fopen(&quot;../config/emails/$topic&quot; . &quot;.txt&quot;,'r');
++    $fp = fopen(ROOTDIR . &quot;config/emails/$topic&quot; . &quot;.txt&quot;,'r');
+     if ($fp)
+     {
+     $subject = fgets($fp);
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000000.html">[Yane-svn] r14 - config/emails
+</A></li>
+	<LI>Next message: <A HREF="000002.html">[Yane-svn] r16 - / config generic_errors manage/forgot_pwd manage/subscriptions
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1">[ date ]</a>
+              <a href="thread.html#1">[ thread ]</a>
+              <a href="subject.html#1">[ subject ]</a>
+              <a href="author.html#1">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yane-svn">More information about the Yane-svn
+mailing list</a><br>
+</body></html>

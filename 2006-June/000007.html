@@ -1,0 +1,177 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yane-svn] r21 - / manage register
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yane-svn/2006-June/index.html" >
+   <LINK REL="made" HREF="mailto:yane-svn%40lists.berlios.de?Subject=Re%3A%20%5BYane-svn%5D%20r21%20-%20/%20manage%20register&In-Reply-To=%3C200606261357.k5QDvLbh009348%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000006.html">
+   <LINK REL="Next"  HREF="000008.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yane-svn] r21 - / manage register</H1>
+    <B>kebron at berlios.de</B> 
+    <A HREF="mailto:yane-svn%40lists.berlios.de?Subject=Re%3A%20%5BYane-svn%5D%20r21%20-%20/%20manage%20register&In-Reply-To=%3C200606261357.k5QDvLbh009348%40sheep.berlios.de%3E"
+       TITLE="[Yane-svn] r21 - / manage register">kebron at berlios.de
+       </A><BR>
+    <I>Mon Jun 26 15:57:21 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000006.html">[Yane-svn] r20 - / manage register
+</A></li>
+        <LI>Next message: <A HREF="000008.html">[Yane-svn] r22 - manage/email_and_pwd register
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#7">[ date ]</a>
+              <a href="thread.html#7">[ thread ]</a>
+              <a href="subject.html#7">[ subject ]</a>
+              <a href="author.html#7">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: kebron
+Date: 2006-06-26 15:57:13 +0200 (Mon, 26 Jun 2006)
+New Revision: 21
+
+Modified:
+   index.php
+   manage/index.html
+   register/index.html
+Log:
+now w3 valid
+
+Modified: index.php
+===================================================================
+--- index.php	2006-06-26 13:15:38 UTC (rev 20)
++++ index.php	2006-06-26 13:57:13 UTC (rev 21)
+@@ -4,13 +4,13 @@
+ &lt;head&gt;
+ &lt;meta http-equiv=&quot;content-type&quot; content=&quot;text/html; charset=ISO-8859-1&quot; /&gt;
+ &lt;title&gt;YaCy-Newsletter&lt;/title&gt;
+-&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;style.css&quot;&gt;
+-&lt;/link&gt;
++&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;style.css&quot; /&gt;
++&lt;/head&gt;
+ &lt;body&gt;
+ &lt;table class=&quot;navigation&quot;&gt;
+  &lt;tr&gt;
+-  &lt;td style=&quot;width:70px&quot;rowspan=&quot;2&quot; class=&quot;white&quot;&gt;&lt;img src=&quot;yacy.png&quot; /&gt;&lt;/td&gt;
+-  &lt;td style=&quot;width:200px&quot; class=&quot;blue&quot;&gt;&lt;a href=&quot;register/index.html&quot;&gt;Register a new account&lt;/td&gt;
++  &lt;td style=&quot;width:70px&quot;rowspan=&quot;2&quot; class=&quot;white&quot;&gt;&lt;img src=&quot;yacy.png&quot; alt=&quot;YaCy logo&quot; /&gt;&lt;/td&gt;
++  &lt;td style=&quot;width:200px&quot; class=&quot;blue&quot;&gt;&lt;a href=&quot;register/index.html&quot;&gt;Register a new account&lt;/a&gt;&lt;/td&gt;
+   &lt;td style=&quot;width:200px&quot; class=&quot;blue&quot;&gt;&lt;a href=&quot;manage/index.html&quot;&gt;Manage your account&lt;/a&gt;&lt;/td&gt;
+   &lt;td class=&quot;blue&quot;&gt;&lt;/td&gt;
+  &lt;/tr&gt;
+
+Modified: manage/index.html
+===================================================================
+--- manage/index.html	2006-06-26 13:15:38 UTC (rev 20)
++++ manage/index.html	2006-06-26 13:57:13 UTC (rev 21)
+@@ -4,21 +4,20 @@
+ &lt;head&gt;
+ &lt;meta http-equiv=&quot;content-type&quot; content=&quot;text/html; charset=ISO-8859-1&quot; /&gt;
+ &lt;title&gt;YaCy-Newsletter&lt;/title&gt;
++&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;../style.css&quot; /&gt;
+ &lt;/head&gt;
+-&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;../style.css&quot;&gt;
+-&lt;/link&gt;
+ &lt;body&gt;
+ &lt;table class=&quot;navigation&quot;&gt;
+  &lt;tr&gt;
+-  &lt;td style=&quot;width:70px&quot;rowspan=&quot;2&quot; class=&quot;white&quot;&gt;&lt;img src=&quot;../yacy.png&quot; /&gt;&lt;/td&gt;
+-  &lt;td style=&quot;width:200px&quot; class=&quot;blue&quot;&gt;&lt;a href=&quot;../register/index.html&quot;&gt;Register a new account&lt;/td&gt;
++  &lt;td style=&quot;width:70px&quot;rowspan=&quot;2&quot; class=&quot;white&quot;&gt;&lt;img src=&quot;../yacy.png&quot; alt=&quot;YaCy logo&quot; /&gt;&lt;/td&gt;
++  &lt;td style=&quot;width:200px&quot; class=&quot;blue&quot;&gt;&lt;a href=&quot;../register/index.html&quot;&gt;Register a new account&lt;/a&gt;&lt;/td&gt;
+   &lt;td style=&quot;width:200px&quot; class=&quot;blue&quot;&gt;&lt;a href=&quot;../manage/index.html&quot;&gt;Manage your account&lt;/a&gt;&lt;/td&gt;
+   &lt;td class=&quot;blue&quot;&gt;&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;&lt;td style=&quot;height:20px&quot; class=&quot;white&quot;&gt;&lt;/td&gt;&lt;/tr&gt;
+ &lt;/table&gt;
+-&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;center&gt;
+-&lt;a href=&quot;subscriptions/&quot;&gt;subscriptions&lt;/a&gt;&lt;br&gt;
++&lt;br /&gt;&lt;br /&gt;&lt;br /&gt;&lt;center&gt;
++&lt;a href=&quot;subscriptions/&quot;&gt;subscriptions&lt;/a&gt;&lt;br /&gt;
+ &lt;!-- &lt;a href=&quot;email_and_pwd/&quot;&gt;email and password&lt;/a&gt;&lt;br&gt; --&gt;
+ &lt;!-- &lt;a href=&quot;forgot_pwd/&quot;&gt;forgot my password&lt;/a&gt;&lt;br&gt; --&gt;
+ &lt;!-- &lt;a href=&quot;delete_account/&quot;&gt;delety ma account&lt;/a&gt;&lt;br&gt; --&gt;
+
+Modified: register/index.html
+===================================================================
+--- register/index.html	2006-06-26 13:15:38 UTC (rev 20)
++++ register/index.html	2006-06-26 13:57:13 UTC (rev 21)
+@@ -4,32 +4,33 @@
+ &lt;head&gt;
+ &lt;meta http-equiv=&quot;content-type&quot; content=&quot;text/html; charset=ISO-8859-1&quot; /&gt;
+ &lt;title&gt;YaCy newsletter management&lt;/title&gt;
++&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;../style.css&quot; /&gt;
+ &lt;/head&gt;
+-&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;../style.css&quot;&gt;
+-&lt;/link&gt;
+ &lt;body&gt;
+ &lt;table class=&quot;navigation&quot;&gt;
+  &lt;tr&gt;
+-  &lt;td style=&quot;width:70px&quot;rowspan=&quot;2&quot; class=&quot;white&quot;&gt;&lt;img src=&quot;../yacy.png&quot; /&gt;&lt;/td&gt;
+-  &lt;td style=&quot;width:200px&quot; class=&quot;blue&quot;&gt;&lt;a href=&quot;../register/index.html&quot;&gt;Register a new account&lt;/td&gt;
++  &lt;td style=&quot;width:70px&quot;rowspan=&quot;2&quot; class=&quot;white&quot;&gt;&lt;img src=&quot;../yacy.png&quot; alt=&quot;YaCy logo&quot; /&gt;&lt;/td&gt;
++  &lt;td style=&quot;width:200px&quot; class=&quot;blue&quot;&gt;&lt;a href=&quot;../register/index.html&quot;&gt;Register a new account&lt;/a&gt;&lt;/td&gt;
+   &lt;td style=&quot;width:200px&quot; class=&quot;blue&quot;&gt;&lt;a href=&quot;../manage/index.html&quot;&gt;Manage your account&lt;/a&gt;&lt;/td&gt;
+   &lt;td class=&quot;blue&quot;&gt;&lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;&lt;td style=&quot;height:20px&quot; class=&quot;white&quot;&gt;&lt;/td&gt;&lt;/tr&gt;
+ &lt;/table&gt;
+-&lt;br&gt;&lt;br&gt;&lt;br&gt;
++&lt;br /&gt;&lt;br /&gt;&lt;br /&gt;
+ &lt;center&gt;
+ 
+-&lt;form method=&quot;POST&quot; action=&quot;register.php&quot;&gt;
++&lt;form method=&quot;post&quot; action=&quot;register.php&quot;&gt;
+ &lt;table&gt;
+ 	&lt;tr&gt;
+-		&lt;td&gt;Your email adress&lt;/td&gt;&lt;td&gt;&lt;input name=&quot;mailaddress&quot; type=&quot;text&quot; size=&quot;30&quot; maxlength=&quot;255&quot; value=&quot;Your email-address&quot; onfocus=&quot;this.select()&quot;&gt;&emsp;&lt;/td&gt;&lt;/tr&gt;
++		&lt;td&gt;Your email adress&lt;/td&gt;&lt;td&gt;&lt;input name=&quot;mailaddress&quot; type=&quot;text&quot; size=&quot;30&quot; maxlength=&quot;255&quot; value=&quot;Your email-address&quot; onfocus=&quot;this.select()&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;
+ 	&lt;tr&gt;
+-		&lt;td&gt;Your password&lt;/td&gt;&lt;td&gt;&lt;input name=&quot;password&quot; type=&quot;text&quot; size=&quot;30&quot; maxlength=&quot;255&quot; value=&quot;PW&quot; onfocus=&quot;this.select()&quot;&gt;&emsp;&lt;/td&gt;&lt;/tr&gt;
++		&lt;td&gt;Your password&lt;/td&gt;&lt;td&gt;&lt;input name=&quot;password&quot; type=&quot;text&quot; size=&quot;30&quot; maxlength=&quot;255&quot; value=&quot;PW&quot; onfocus=&quot;this.select()&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;
+ 	&lt;tr&gt;
+-		&lt;td&gt;repeat password&lt;/td&gt;&lt;td&gt;&lt;input name=&quot;password&quot; type=&quot;text&quot; size=&quot;30&quot; maxlength=&quot;255&quot; value=&quot;PW&quot; onfocus=&quot;this.select()&quot;&gt;&emsp;&lt;/td&gt;&lt;/tr&gt;
++		&lt;td&gt;repeat password&lt;/td&gt;&lt;td&gt;&lt;input name=&quot;password&quot; type=&quot;text&quot; size=&quot;30&quot; maxlength=&quot;255&quot; value=&quot;PW&quot; onfocus=&quot;this.select()&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;
+ 	&lt;tr&gt;
+-		&lt;td&gt;&lt;/td&gt;&lt;td&gt;&lt;input type=&quot;submit&quot; name=&quot;subscribe&quot; value=&quot;Subscribe&quot;&gt;&lt;/td&gt;&lt;/tr&gt;
++		&lt;td&gt;&lt;/td&gt;&lt;td&gt;&lt;input type=&quot;submit&quot; name=&quot;subscribe&quot; value=&quot;Subscribe&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;
++&lt;/table&gt;
+ &lt;/form&gt;
++&lt;/center&gt;
+ &lt;/body&gt;
+ &lt;/html&gt;
+\ No newline at end of file
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000006.html">[Yane-svn] r20 - / manage register
+</A></li>
+	<LI>Next message: <A HREF="000008.html">[Yane-svn] r22 - manage/email_and_pwd register
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#7">[ date ]</a>
+              <a href="thread.html#7">[ thread ]</a>
+              <a href="subject.html#7">[ subject ]</a>
+              <a href="author.html#7">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yane-svn">More information about the Yane-svn
+mailing list</a><br>
+</body></html>

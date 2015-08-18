@@ -1,0 +1,1430 @@
+From rramthun at berlios.de  Sun Jun 25 20:37:45 2006
+From: rramthun at berlios.de (rramthun at BerliOS)
+Date: Sun, 25 Jun 2006 20:37:45 +0200
+Subject: [Yane-svn] r14 - config/emails
+Message-ID: <200606251837.k5PIbjeb017931@sheep.berlios.de>
+
+Author: rramthun
+Date: 2006-06-25 20:37:43 +0200 (Sun, 25 Jun 2006)
+New Revision: 14
+
+Added:
+   config/emails/resend_password.txt
+Log:
+Mailinglisten test
+
+Added: config/emails/resend_password.txt
+===================================================================
+--- config/emails/resend_password.txt	2006-06-25 12:47:55 UTC (rev 13)
++++ config/emails/resend_password.txt	2006-06-25 18:37:43 UTC (rev 14)
+@@ -0,0 +1,9 @@
++Forgot password
++You forgot your password and requested a new one.
++
++Here it is:
++
++New password: %1%
++--
++Kind regards,
++the YaCy newsletter team
+\ No newline at end of file
+
+
+
+From rramthun at berlios.de  Sun Jun 25 20:58:39 2006
+From: rramthun at berlios.de (rramthun at BerliOS)
+Date: Sun, 25 Jun 2006 20:58:39 +0200
+Subject: [Yane-svn] r15 - /
+Message-ID: <200606251858.k5PIwd4n025526@sheep.berlios.de>
+
+Author: rramthun
+Date: 2006-06-25 20:58:38 +0200 (Sun, 25 Jun 2006)
+New Revision: 15
+
+Modified:
+   functions.php
+Log:
+Zweiter Test...
+
+Modified: functions.php
+===================================================================
+--- functions.php	2006-06-25 18:37:43 UTC (rev 14)
++++ functions.php	2006-06-25 18:58:38 UTC (rev 15)
+@@ -48,7 +48,7 @@
+     #Sends a mail-template to the given address. $topic must be name of template.
+     function send_mail($mailaddress, $topic, $a="", $b="", $c="", $d="")
+     {
+-    $fp = fopen("../config/emails/$topic" . ".txt",'r');
++    $fp = fopen(ROOTDIR . "config/emails/$topic" . ".txt",'r');
+     if ($fp)
+     {
+     $subject = fgets($fp);
+
+
+
+From rramthun at berlios.de  Sun Jun 25 22:16:46 2006
+From: rramthun at berlios.de (rramthun at BerliOS)
+Date: Sun, 25 Jun 2006 22:16:46 +0200
+Subject: [Yane-svn] r16 - / config generic_errors manage/forgot_pwd manage/subscriptions
+Message-ID: <200606252016.k5PKGkKD028500@sheep.berlios.de>
+
+Author: rramthun
+Date: 2006-06-25 22:16:45 +0200 (Sun, 25 Jun 2006)
+New Revision: 16
+
+Added:
+   generic_errors/
+   generic_errors/user_not_activated.html
+   manage/forgot_pwd/email_wrong.html
+   manage/forgot_pwd/success.html
+Modified:
+   Paths_complete.txt
+   config/access_data.php
+   functions.php
+   manage/forgot_pwd/send_pw.php
+   manage/subscriptions/manage_lists.php
+Log:
+Send forgotten pws nearly completed
+
+Modified: Paths_complete.txt
+===================================================================
+--- Paths_complete.txt	2006-06-25 18:58:38 UTC (rev 15)
++++ Paths_complete.txt	2006-06-25 20:16:45 UTC (rev 16)
+@@ -1,5 +1,7 @@
+-Contains a list of directories which are fuly functional and can be designed in HTML part.
++Contains a list of directories which are fully functional and can be designed in HTML part.
+ 
+ register
+ activate
+ manage\subscriptions
++manage\forgot_pwd
++generic_errors
+\ No newline at end of file
+
+Modified: config/access_data.php
+===================================================================
+--- config/access_data.php	2006-06-25 18:58:38 UTC (rev 15)
++++ config/access_data.php	2006-06-25 20:16:45 UTC (rev 16)
+@@ -7,4 +7,5 @@
+     define('MYSQL_PASS',     'enterhere');
+     define('MYSQL_DATABASE', 'enterhere');
+     define('DUMP_PW', 'enterhere');
+-?>
+\ No newline at end of file
++    define('ROOTDIR', '/home/www/newsletters/');
++?>
+
+Modified: functions.php
+===================================================================
+--- functions.php	2006-06-25 18:58:38 UTC (rev 15)
++++ functions.php	2006-06-25 20:16:45 UTC (rev 16)
+@@ -134,4 +134,5 @@
+     }
+     
+     #-------------------------------------------------------------------------------------------------------------------------
++
+ ?>
+\ No newline at end of file
+
+Added: generic_errors/user_not_activated.html
+===================================================================
+--- generic_errors/user_not_activated.html	2006-06-25 18:58:38 UTC (rev 15)
++++ generic_errors/user_not_activated.html	2006-06-25 20:16:45 UTC (rev 16)
+@@ -0,0 +1,8 @@
++<html>
++<head><title>User not activated</title></head>
++<body>
++This email-address is registered, but not activated.<p>
++
++Please activate your account first as descibed in the registration mail you should have gotten.
++</body>
++</html>
+\ No newline at end of file
+
+Added: manage/forgot_pwd/email_wrong.html
+===================================================================
+--- manage/forgot_pwd/email_wrong.html	2006-06-25 18:58:38 UTC (rev 15)
++++ manage/forgot_pwd/email_wrong.html	2006-06-25 20:16:45 UTC (rev 16)
+@@ -0,0 +1,8 @@
++<html>
++<head><title>Error during sending new password</title></head>
++<body>
++You supplied an invalid email-address.<p>
++
++Please start over <a href="./">the lost-my-password function</a>.
++</body>
++</html>
+\ No newline at end of file
+
+Modified: manage/forgot_pwd/send_pw.php
+===================================================================
+--- manage/forgot_pwd/send_pw.php	2006-06-25 18:58:38 UTC (rev 15)
++++ manage/forgot_pwd/send_pw.php	2006-06-25 20:16:45 UTC (rev 16)
+@@ -4,17 +4,47 @@
+      
+     #-------------------------------------------------------------------------
+     
++    #Check the email-address
++    
++    #get email-address from POST
++    $mailaddress=$_POST['mailaddress'];
++    
++    $mailaddress=trim($mailaddress);
++    
++    #Check email-address for @ and spam-attacks
++    if (!validate_email($mailaddress)){ 
++    header("Location: email_wrong.html");
++    die();
++    }
++    
++    #-------------------------------------------------------------------------
++    
++    #Create random password (8 chars)
++    $pattern = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
++    $new_plainpw="";
++    for($i=0;$i<8;$i++)
++    {
++      $new_plainpw .= $pattern{rand(0,61)};
++    }
++  
++    $new_md5pw=md5($new_plainpw);
++    
+     #Open MySQL-DB
+     $link = open_db();
+     
+-    #Save new subscription settings everything
+-    $sql="UPDATE User SET security_list = '$security', newsletter_list = '$news', announce_list = '$release' WHERE CONVERT( email_address USING utf8 ) = '$mailadresse' AND CONVERT( md5_password USING utf8 ) = '$password'";
++    #To-DO: Check if user activated his account already
++    
++    #Save new random password
++    $sql="UPDATE User SET md5_password = '$new_md5pw' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress'";
+ 
+     mysql_query($sql) OR die(mysql_error());
+     
+     #close DB
+     mysql_close($link);
+     
++    #Send mail to user
++    send_mail($mailaddress, "resend_password", $new_plainpw);
++    
+     #-------------------------------------------------------------------------
+     
+     #Show success of the subscription
+
+Added: manage/forgot_pwd/success.html
+===================================================================
+--- manage/forgot_pwd/success.html	2006-06-25 18:58:38 UTC (rev 15)
++++ manage/forgot_pwd/success.html	2006-06-25 20:16:45 UTC (rev 16)
+@@ -0,0 +1,7 @@
++<html>
++<head><title>New password sent successfully</title></head>
++<body>
++A new password has been sent to your email-address.<br>
++You can now login with this password.<p>
++</body>
++</html>
+\ No newline at end of file
+
+Modified: manage/subscriptions/manage_lists.php
+===================================================================
+--- manage/subscriptions/manage_lists.php	2006-06-25 18:58:38 UTC (rev 15)
++++ manage/subscriptions/manage_lists.php	2006-06-25 20:16:45 UTC (rev 16)
+@@ -1,10 +1,10 @@
+ <html>
+     <head>
+-        <title>YaCy newsletter subscriptions</title>
++        <title>Newsletter subscriptions</title>
+     </head>
+     <body>
+         <center>
+-            <h2>YaCy newsletter subscriptions</h2>
++            <h2>Newsletter subscriptions</h2>
+             <br />
+             <br />
+             <br />
+
+
+
+From rramthun at berlios.de  Mon Jun 26 12:15:16 2006
+From: rramthun at berlios.de (rramthun at BerliOS)
+Date: Mon, 26 Jun 2006 12:15:16 +0200
+Subject: [Yane-svn] r17 - / config manage/email_and_pwd manage/subscriptions
+Message-ID: <200606261015.k5QAFGqR021610@sheep.berlios.de>
+
+Author: rramthun
+Date: 2006-06-26 12:15:15 +0200 (Mon, 26 Jun 2006)
+New Revision: 17
+
+Added:
+   config/project_logo.gif
+   manage/email_and_pwd/index.html
+Removed:
+   manage/subscriptions/yacy.gif
+Modified:
+   functions.php
+   manage/subscriptions/save.php
+Log:
+Fixed the list selection. It didn't save properly.
+Moved the logo to a new, more generic, location.
+
+Added: config/project_logo.gif
+===================================================================
+(Binary files differ)
+
+
+Property changes on: config/project_logo.gif
+___________________________________________________________________
+Name: svn:mime-type
+   + application/octet-stream
+
+Modified: functions.php
+===================================================================
+--- functions.php	2006-06-25 20:16:45 UTC (rev 16)
++++ functions.php	2006-06-26 10:15:15 UTC (rev 17)
+@@ -46,7 +46,7 @@
+     #-------------------------------------------------------------------------------------------------------------------------
+     
+     #Sends a mail-template to the given address. $topic must be name of template.
+-    function send_mail($mailaddress, $topic, $a="", $b="", $c="", $d="")
++    function send_mail($mailaddress, $topic, $a="", $b="", $c="", $d="", $e="", $f="")
+     {
+     $fp = fopen(ROOTDIR . "config/emails/$topic" . ".txt",'r');
+     if ($fp)
+@@ -77,7 +77,13 @@
+     if (!$d=="") {
+     $message = str_replace("%4%", $d, $message);
+     }
+-    
++    if (!$e=="") {
++    $message = str_replace("%5%", $d, $message);
++    }
++    if (!$f=="") {
++    $message = str_replace("%6%", $d, $message);
++    }
++    #Send the mail or, in case of error, print it.
+     if (!mail($mailaddress, $subject, $message, "From: $sender\r\n"))
+     die("Error queuing mail. Here the content: $message");
+     
+
+Added: manage/email_and_pwd/index.html
+===================================================================
+--- manage/email_and_pwd/index.html	2006-06-25 20:16:45 UTC (rev 16)
++++ manage/email_and_pwd/index.html	2006-06-26 10:15:15 UTC (rev 17)
+@@ -0,0 +1,13 @@
++<html>
++<head><title>Forgot your password</title></head>
++<body>
++Enter your email-address:
++
++<form method="POST" action="enter_changes.php">
++		<input name="mailaddress" type="text" size="30" maxlength="255" value="Your email-address" onfocus="this.value=''">&emsp;
++        <input name="password" type="text" size="30" maxlength="255" value="Your password" onfocus="this.value=''">&emsp;
++		<input type="submit" name="login" value="Login">
++</form>
++
++</body>
++</html>
+\ No newline at end of file
+
+Modified: manage/subscriptions/save.php
+===================================================================
+--- manage/subscriptions/save.php	2006-06-25 20:16:45 UTC (rev 16)
++++ manage/subscriptions/save.php	2006-06-26 10:15:15 UTC (rev 17)
+@@ -45,7 +45,7 @@
+     $link = open_db();
+     
+     #Save new subscription settings everything
+-    $sql="UPDATE User SET security_list = '$security', newsletter_list = '$news', announce_list = '$release' WHERE CONVERT( email_address USING utf8 ) = '$mailadresse' AND CONVERT( md5_password USING utf8 ) = '$password'";
++    $sql="UPDATE User SET security_list = '$security', newsletter_list = '$news', announce_list = '$release' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress' AND CONVERT( md5_password USING utf8 ) = '$password'";
+ 
+     mysql_query($sql) OR die(mysql_error());
+     
+@@ -55,7 +55,7 @@
+     #-------------------------------------------------------------------------
+     
+     #Save the new modification time
+-    log_change($mailadresse);
++    log_change($mailaddress);
+     
+     #-------------------------------------------------------------------------
+     
+
+Deleted: manage/subscriptions/yacy.gif
+===================================================================
+(Binary files differ)
+
+
+
+From kebron at berlios.de  Mon Jun 26 12:20:54 2006
+From: kebron at berlios.de (kebron at berlios.de)
+Date: Mon, 26 Jun 2006 12:20:54 +0200
+Subject: [Yane-svn] r18 - / manage register
+Message-ID: <200606261020.k5QAKsT5021943@sheep.berlios.de>
+
+Author: kebron
+Date: 2006-06-26 12:20:43 +0200 (Mon, 26 Jun 2006)
+New Revision: 18
+
+Modified:
+   index.php
+   manage/index.html
+   register/index.html
+Log:
+add menu to manage/index.html and register/index.html 
+
+Modified: index.php
+===================================================================
+--- index.php	2006-06-26 10:15:15 UTC (rev 17)
++++ index.php	2006-06-26 10:20:43 UTC (rev 18)
+@@ -1,8 +1,12 @@
+-<html>
+-<head></head>
++<?xml version="1.0" encoding="UTF-8"?>
++<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "xhtml1-transitional.dtd">
++<html xmlns="http://www.w3.org/1999/xhtml">
++<head>
++<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1" />
++<title>YaCy-Newsletter</title>
+ <body>
+-<a href="register/">Register a new account</a><br>
+-<a href="manage/">Manage your account</a><br>
+-<small><?php include 'functions.php'; show_version();?></small>
++<a href="register/index.html">Register a new account</a> | <a href="manage/index.html">Manage your account</a>
++<small><?php include 'functions.php'; show_version();?></small><br />
++<hr noshade="noshade" />
+ </body>
+ </html>
+\ No newline at end of file
+
+Modified: manage/index.html
+===================================================================
+--- manage/index.html	2006-06-26 10:15:15 UTC (rev 17)
++++ manage/index.html	2006-06-26 10:20:43 UTC (rev 18)
+@@ -1,9 +1,19 @@
+-<html>
+-<head></head>
++<?xml version="1.0" encoding="UTF-8"?>
++<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "xhtml1-transitional.dtd">
++<html xmlns="http://www.w3.org/1999/xhtml">
++<head>
++<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1" />
++<title>YaCy-Newsletter</title>
++</head>
+ <body>
++<a href="../register/index.html">Register a new account</a> | <a href="../manage/index.html">Manage your account</a>
++<small><?php include 'functions.php'; show_version();?></small><br />
++<hr noshade="noshade" />
++<center><h2>YaCy newsletter Registration</h2></center>
++<br><br><br>
+ <a href="subscriptions/">subscriptions</a><br>
+ <!-- <a href="email_and_pwd/">email and password</a><br> -->
+ <!-- <a href="forgot_pwd/">forgot my password</a><br> -->
+ <!-- <a href="delete_account/">delety ma account</a><br> -->
+ </body>
+-</html>
+\ No newline at end of file
++</html>
+
+Modified: register/index.html
+===================================================================
+--- register/index.html	2006-06-26 10:15:15 UTC (rev 17)
++++ register/index.html	2006-06-26 10:20:43 UTC (rev 18)
+@@ -1,9 +1,15 @@
+-<html>
++<?xml version="1.0" encoding="UTF-8"?>
++<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "xhtml1-transitional.dtd">
++<html xmlns="http://www.w3.org/1999/xhtml">
+ <head>
++<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1" />
+ <title>YaCy newsletter management</title>
+ </head>
+ <body>
+-<center><h2>YaCy newsletter management</h2></center>
++<a href="../register/index.html">Register a new account</a> | <a href="../manage/index.html">Manage your account</a>
++<small><?php include 'functions.php'; show_version();?></small><br />
++<hr noshade="noshade" />
++<center><h2>YaCy newsletter Registration</h2></center>
+ <br><br><br>
+ <center>
+ 
+@@ -12,7 +18,5 @@
+ 		<input name="password" type="text" size="30" maxlength="255" value="PW" onfocus="this.select()">&emsp;
+ 		<input type="submit" name="subscribe" value="Subscribe">
+ </form>
+-
+-</center>
+ </body>
+ </html>
+\ No newline at end of file
+
+
+
+From rramthun at berlios.de  Mon Jun 26 12:44:34 2006
+From: rramthun at berlios.de (rramthun at BerliOS)
+Date: Mon, 26 Jun 2006 12:44:34 +0200
+Subject: [Yane-svn] r19 - /
+Message-ID: <200606261044.k5QAiYld027167@sheep.berlios.de>
+
+Author: rramthun
+Date: 2006-06-26 12:44:32 +0200 (Mon, 26 Jun 2006)
+New Revision: 19
+
+Modified:
+   index.php
+Log:
+Fixed parse-error in index.php
+
+Modified: index.php
+===================================================================
+--- index.php	2006-06-26 10:20:43 UTC (rev 18)
++++ index.php	2006-06-26 10:44:32 UTC (rev 19)
+@@ -1,4 +1,4 @@
+-<?xml version="1.0" encoding="UTF-8"?>
++<?php echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"; ?>
+ <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "xhtml1-transitional.dtd">
+ <html xmlns="http://www.w3.org/1999/xhtml">
+ <head>
+
+
+
+From kebron at berlios.de  Mon Jun 26 15:15:47 2006
+From: kebron at berlios.de (kebron at berlios.de)
+Date: Mon, 26 Jun 2006 15:15:47 +0200
+Subject: [Yane-svn] r20 - / manage register
+Message-ID: <200606261315.k5QDFlHI000819@sheep.berlios.de>
+
+Author: kebron
+Date: 2006-06-26 15:15:38 +0200 (Mon, 26 Jun 2006)
+New Revision: 20
+
+Added:
+   style.css
+   yacy.png
+Modified:
+   index.php
+   manage/index.html
+   register/index.html
+Log:
+add css
+
+Modified: index.php
+===================================================================
+--- index.php	2006-06-26 10:44:32 UTC (rev 19)
++++ index.php	2006-06-26 13:15:38 UTC (rev 20)
+@@ -1,12 +1,23 @@
+-<?php echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"; ?>
++ <?php echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";?>
+ <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "xhtml1-transitional.dtd">
+ <html xmlns="http://www.w3.org/1999/xhtml">
+ <head>
+ <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1" />
+ <title>YaCy-Newsletter</title>
++<link rel="stylesheet" type="text/css" href="style.css">
++</link>
+ <body>
+-<a href="register/index.html">Register a new account</a> | <a href="manage/index.html">Manage your account</a>
+-<small><?php include 'functions.php'; show_version();?></small><br />
+-<hr noshade="noshade" />
++<table class="navigation">
++ <tr>
++  <td style="width:70px"rowspan="2" class="white"><img src="yacy.png" /></td>
++  <td style="width:200px" class="blue"><a href="register/index.html">Register a new account</td>
++  <td style="width:200px" class="blue"><a href="manage/index.html">Manage your account</a></td>
++  <td class="blue"></td>
++ </tr>
++ <tr><td style="height:20px" class="white"></td></tr>
++</table>
++<br /><br /><br /><br /><br /><br />
++ <p id="Fusszeile"><small><?php include 'functions.php'; show_version();?></small><br /></p>
++
+ </body>
+ </html>
+\ No newline at end of file
+
+Modified: manage/index.html
+===================================================================
+--- manage/index.html	2006-06-26 10:44:32 UTC (rev 19)
++++ manage/index.html	2006-06-26 13:15:38 UTC (rev 20)
+@@ -5,15 +5,23 @@
+ <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1" />
+ <title>YaCy-Newsletter</title>
+ </head>
++<link rel="stylesheet" type="text/css" href="../style.css">
++</link>
+ <body>
+-<a href="../register/index.html">Register a new account</a> | <a href="../manage/index.html">Manage your account</a>
+-<small><?php include 'functions.php'; show_version();?></small><br />
+-<hr noshade="noshade" />
+-<center><h2>YaCy newsletter Registration</h2></center>
+-<br><br><br>
++<table class="navigation">
++ <tr>
++  <td style="width:70px"rowspan="2" class="white"><img src="../yacy.png" /></td>
++  <td style="width:200px" class="blue"><a href="../register/index.html">Register a new account</td>
++  <td style="width:200px" class="blue"><a href="../manage/index.html">Manage your account</a></td>
++  <td class="blue"></td>
++ </tr>
++ <tr><td style="height:20px" class="white"></td></tr>
++</table>
++<br><br><br><center>
+ <a href="subscriptions/">subscriptions</a><br>
+ <!-- <a href="email_and_pwd/">email and password</a><br> -->
+ <!-- <a href="forgot_pwd/">forgot my password</a><br> -->
+ <!-- <a href="delete_account/">delety ma account</a><br> -->
++</center>
+ </body>
+ </html>
+
+Modified: register/index.html
+===================================================================
+--- register/index.html	2006-06-26 10:44:32 UTC (rev 19)
++++ register/index.html	2006-06-26 13:15:38 UTC (rev 20)
+@@ -5,18 +5,31 @@
+ <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1" />
+ <title>YaCy newsletter management</title>
+ </head>
++<link rel="stylesheet" type="text/css" href="../style.css">
++</link>
+ <body>
+-<a href="../register/index.html">Register a new account</a> | <a href="../manage/index.html">Manage your account</a>
+-<small><?php include 'functions.php'; show_version();?></small><br />
+-<hr noshade="noshade" />
+-<center><h2>YaCy newsletter Registration</h2></center>
++<table class="navigation">
++ <tr>
++  <td style="width:70px"rowspan="2" class="white"><img src="../yacy.png" /></td>
++  <td style="width:200px" class="blue"><a href="../register/index.html">Register a new account</td>
++  <td style="width:200px" class="blue"><a href="../manage/index.html">Manage your account</a></td>
++  <td class="blue"></td>
++ </tr>
++ <tr><td style="height:20px" class="white"></td></tr>
++</table>
+ <br><br><br>
+ <center>
+ 
+ <form method="POST" action="register.php">
+-		<input name="mailaddress" type="text" size="30" maxlength="255" value="Your email-address" onfocus="this.select()">&emsp;
+-		<input name="password" type="text" size="30" maxlength="255" value="PW" onfocus="this.select()">&emsp;
+-		<input type="submit" name="subscribe" value="Subscribe">
++<table>
++	<tr>
++		<td>Your email adress</td><td><input name="mailaddress" type="text" size="30" maxlength="255" value="Your email-address" onfocus="this.select()">&emsp;</td></tr>
++	<tr>
++		<td>Your password</td><td><input name="password" type="text" size="30" maxlength="255" value="PW" onfocus="this.select()">&emsp;</td></tr>
++	<tr>
++		<td>repeat password</td><td><input name="password" type="text" size="30" maxlength="255" value="PW" onfocus="this.select()">&emsp;</td></tr>
++	<tr>
++		<td></td><td><input type="submit" name="subscribe" value="Subscribe"></td></tr>
+ </form>
+ </body>
+ </html>
+\ No newline at end of file
+
+Added: style.css
+===================================================================
+--- style.css	2006-06-26 10:44:32 UTC (rev 19)
++++ style.css	2006-06-26 13:15:38 UTC (rev 20)
+@@ -0,0 +1,35 @@
++
++
++    p#Fusszeile {
++    clear: both;
++    font-size: 0.9em;
++    margin: 0; padding: 0.1em;
++    text-align: center;
++    background-color: #bbcccc;
++  }
++
++    .navigation {
++    width:100%;
++  }
++    td { 
++    border:0px
++    overflow:hidden;
++    text-decoration: none; font-weight: bold;
++    
++    
++ }
++
++    td a { 
++    text-align: center;
++    color: #000000;
++    text-decoration: none;
++    text-align: center;
++ }
++
++    td a:hover { 
++    text-align: center;
++    color: #ffffff;
++ }
++
++.blue   {background-color:#bbcccc; }
++.white   {background-color:#ffffff; }
+\ No newline at end of file
+
+Added: yacy.png
+===================================================================
+(Binary files differ)
+
+
+Property changes on: yacy.png
+___________________________________________________________________
+Name: svn:mime-type
+   + application/octet-stream
+
+
+
+From kebron at berlios.de  Mon Jun 26 15:57:21 2006
+From: kebron at berlios.de (kebron at berlios.de)
+Date: Mon, 26 Jun 2006 15:57:21 +0200
+Subject: [Yane-svn] r21 - / manage register
+Message-ID: <200606261357.k5QDvLbh009348@sheep.berlios.de>
+
+Author: kebron
+Date: 2006-06-26 15:57:13 +0200 (Mon, 26 Jun 2006)
+New Revision: 21
+
+Modified:
+   index.php
+   manage/index.html
+   register/index.html
+Log:
+now w3 valid
+
+Modified: index.php
+===================================================================
+--- index.php	2006-06-26 13:15:38 UTC (rev 20)
++++ index.php	2006-06-26 13:57:13 UTC (rev 21)
+@@ -4,13 +4,13 @@
+ <head>
+ <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1" />
+ <title>YaCy-Newsletter</title>
+-<link rel="stylesheet" type="text/css" href="style.css">
+-</link>
++<link rel="stylesheet" type="text/css" href="style.css" />
++</head>
+ <body>
+ <table class="navigation">
+  <tr>
+-  <td style="width:70px"rowspan="2" class="white"><img src="yacy.png" /></td>
+-  <td style="width:200px" class="blue"><a href="register/index.html">Register a new account</td>
++  <td style="width:70px"rowspan="2" class="white"><img src="yacy.png" alt="YaCy logo" /></td>
++  <td style="width:200px" class="blue"><a href="register/index.html">Register a new account</a></td>
+   <td style="width:200px" class="blue"><a href="manage/index.html">Manage your account</a></td>
+   <td class="blue"></td>
+  </tr>
+
+Modified: manage/index.html
+===================================================================
+--- manage/index.html	2006-06-26 13:15:38 UTC (rev 20)
++++ manage/index.html	2006-06-26 13:57:13 UTC (rev 21)
+@@ -4,21 +4,20 @@
+ <head>
+ <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1" />
+ <title>YaCy-Newsletter</title>
++<link rel="stylesheet" type="text/css" href="../style.css" />
+ </head>
+-<link rel="stylesheet" type="text/css" href="../style.css">
+-</link>
+ <body>
+ <table class="navigation">
+  <tr>
+-  <td style="width:70px"rowspan="2" class="white"><img src="../yacy.png" /></td>
+-  <td style="width:200px" class="blue"><a href="../register/index.html">Register a new account</td>
++  <td style="width:70px"rowspan="2" class="white"><img src="../yacy.png" alt="YaCy logo" /></td>
++  <td style="width:200px" class="blue"><a href="../register/index.html">Register a new account</a></td>
+   <td style="width:200px" class="blue"><a href="../manage/index.html">Manage your account</a></td>
+   <td class="blue"></td>
+  </tr>
+  <tr><td style="height:20px" class="white"></td></tr>
+ </table>
+-<br><br><br><center>
+-<a href="subscriptions/">subscriptions</a><br>
++<br /><br /><br /><center>
++<a href="subscriptions/">subscriptions</a><br />
+ <!-- <a href="email_and_pwd/">email and password</a><br> -->
+ <!-- <a href="forgot_pwd/">forgot my password</a><br> -->
+ <!-- <a href="delete_account/">delety ma account</a><br> -->
+
+Modified: register/index.html
+===================================================================
+--- register/index.html	2006-06-26 13:15:38 UTC (rev 20)
++++ register/index.html	2006-06-26 13:57:13 UTC (rev 21)
+@@ -4,32 +4,33 @@
+ <head>
+ <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1" />
+ <title>YaCy newsletter management</title>
++<link rel="stylesheet" type="text/css" href="../style.css" />
+ </head>
+-<link rel="stylesheet" type="text/css" href="../style.css">
+-</link>
+ <body>
+ <table class="navigation">
+  <tr>
+-  <td style="width:70px"rowspan="2" class="white"><img src="../yacy.png" /></td>
+-  <td style="width:200px" class="blue"><a href="../register/index.html">Register a new account</td>
++  <td style="width:70px"rowspan="2" class="white"><img src="../yacy.png" alt="YaCy logo" /></td>
++  <td style="width:200px" class="blue"><a href="../register/index.html">Register a new account</a></td>
+   <td style="width:200px" class="blue"><a href="../manage/index.html">Manage your account</a></td>
+   <td class="blue"></td>
+  </tr>
+  <tr><td style="height:20px" class="white"></td></tr>
+ </table>
+-<br><br><br>
++<br /><br /><br />
+ <center>
+ 
+-<form method="POST" action="register.php">
++<form method="post" action="register.php">
+ <table>
+ 	<tr>
+-		<td>Your email adress</td><td><input name="mailaddress" type="text" size="30" maxlength="255" value="Your email-address" onfocus="this.select()">&emsp;</td></tr>
++		<td>Your email adress</td><td><input name="mailaddress" type="text" size="30" maxlength="255" value="Your email-address" onfocus="this.select()" /></td></tr>
+ 	<tr>
+-		<td>Your password</td><td><input name="password" type="text" size="30" maxlength="255" value="PW" onfocus="this.select()">&emsp;</td></tr>
++		<td>Your password</td><td><input name="password" type="text" size="30" maxlength="255" value="PW" onfocus="this.select()" /></td></tr>
+ 	<tr>
+-		<td>repeat password</td><td><input name="password" type="text" size="30" maxlength="255" value="PW" onfocus="this.select()">&emsp;</td></tr>
++		<td>repeat password</td><td><input name="password" type="text" size="30" maxlength="255" value="PW" onfocus="this.select()" /></td></tr>
+ 	<tr>
+-		<td></td><td><input type="submit" name="subscribe" value="Subscribe"></td></tr>
++		<td></td><td><input type="submit" name="subscribe" value="Subscribe" /></td></tr>
++</table>
+ </form>
++</center>
+ </body>
+ </html>
+\ No newline at end of file
+
+
+
+From rramthun at berlios.de  Mon Jun 26 17:24:42 2006
+From: rramthun at berlios.de (rramthun at BerliOS)
+Date: Mon, 26 Jun 2006 17:24:42 +0200
+Subject: [Yane-svn] r22 - manage/email_and_pwd register
+Message-ID: <200606261524.k5QFOgtZ019307@sheep.berlios.de>
+
+Author: rramthun
+Date: 2006-06-26 17:24:41 +0200 (Mon, 26 Jun 2006)
+New Revision: 22
+
+Added:
+   manage/email_and_pwd/enter_changes.php
+   register/pws_dont_match.html
+Modified:
+   register/index.html
+   register/register.php
+Log:
+Check the double entered password
+
+Added: manage/email_and_pwd/enter_changes.php
+===================================================================
+--- manage/email_and_pwd/enter_changes.php	2006-06-26 13:57:13 UTC (rev 21)
++++ manage/email_and_pwd/enter_changes.php	2006-06-26 15:24:41 UTC (rev 22)
+@@ -0,0 +1,53 @@
++<?php
++    
++    include '../../functions.php';
++     
++    #-------------------------------------------------------------------------
++    
++    #Check the email-address
++    
++    #get email-address from POST
++    $mailaddress=$_POST['mailaddress'];
++    
++    $mailaddress=trim($mailaddress);
++    
++    #Check email-address for @ and spam-attacks
++    if (!validate_email($mailaddress)){ 
++    header("Location: email_wrong.html");
++    die();
++    }
++    
++    #-------------------------------------------------------------------------
++    
++    #Create random password (8 chars)
++    $pattern = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
++    $new_plainpw="";
++    for($i=0;$i<8;$i++)
++    {
++      $new_plainpw .= $pattern{rand(0,61)};
++    }
++  
++    $new_md5pw=md5($new_plainpw);
++    
++    #Open MySQL-DB
++    $link = open_db();
++    
++    #To-DO: Check if user activated his account already
++    
++    #Save new random password
++    $sql="UPDATE User SET md5_password = '$new_md5pw' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress'";
++
++    mysql_query($sql) OR die(mysql_error());
++    
++    #close DB
++    mysql_close($link);
++    
++    #Send mail to user
++    send_mail($mailaddress, "resend_password", $new_plainpw);
++    
++    #-------------------------------------------------------------------------
++    
++    #Show success of the subscription
++    header("Location: success.html");
++
++?>
+\ No newline at end of file
+
+Modified: register/index.html
+===================================================================
+--- register/index.html	2006-06-26 13:57:13 UTC (rev 21)
++++ register/index.html	2006-06-26 15:24:41 UTC (rev 22)
+@@ -24,9 +24,9 @@
+ 	<tr>
+ 		<td>Your email adress</td><td><input name="mailaddress" type="text" size="30" maxlength="255" value="Your email-address" onfocus="this.select()" /></td></tr>
+ 	<tr>
+-		<td>Your password</td><td><input name="password" type="text" size="30" maxlength="255" value="PW" onfocus="this.select()" /></td></tr>
++		<td>Your password</td><td><input name="password1" type="text" size="30" maxlength="255" value="PW" onfocus="this.select()" /></td></tr>
+ 	<tr>
+-		<td>repeat password</td><td><input name="password" type="text" size="30" maxlength="255" value="PW" onfocus="this.select()" /></td></tr>
++		<td>repeat password</td><td><input name="password2" type="text" size="30" maxlength="255" value="PW" onfocus="this.select()" /></td></tr>
+ 	<tr>
+ 		<td></td><td><input type="submit" name="subscribe" value="Subscribe" /></td></tr>
+ </table>
+
+Added: register/pws_dont_match.html
+===================================================================
+--- register/pws_dont_match.html	2006-06-26 13:57:13 UTC (rev 21)
++++ register/pws_dont_match.html	2006-06-26 15:24:41 UTC (rev 22)
+@@ -0,0 +1,8 @@
++<html>
++<head><title>Error during registration</title></head>
++<body>
++The passwords don't match.<p>
++
++Please start over <a href="./">the registration process</a>.
++</body>
++</html>
+\ No newline at end of file
+
+Modified: register/register.php
+===================================================================
+--- register/register.php	2006-06-26 13:57:13 UTC (rev 21)
++++ register/register.php	2006-06-26 15:24:41 UTC (rev 22)
+@@ -10,19 +10,30 @@
+     
+     #-------------------------------------------------------------------------------------------------------------------------
+     
+-    #Initialize some common variables
++    #check if the passwords match
++    $plain_pw1=$_POST['password1'];
++    $plain_pw2=$_POST['password1'];
+     
++    if (!(password1==password2)) {
++    header("Location: pws_dont_match.html");
++    die();
++    }
++    
++    #-------------------------------------------------------------------------------------------------------------------------
++    
+     #get email-address from POST
+-    $mailadresse=$_POST['mailaddress'];
++    $mailaddress=$_POST['mailaddress'];
+     
+-    $mailadresse=trim($mailadresse);
++    $mailaddress=trim($mailaddress);
+     
+     #Check email-address for @ and spam-attacks
+-    if (!validate_email($mailadresse)){ 
++    if (!validate_email($mailaddress)){ 
+     header("Location: email_wrong.html");
+     die();
+     }
+     
++    #-------------------------------------------------------------------------------------------------------------------------
++    
+     #Get the user's IP
+     $ip=$_SERVER['REMOTE_ADDR'];
+     
+@@ -32,18 +43,18 @@
+     $link = open_db();
+ 
+     #Check if the user already has registered
+-    $result = mysql_query("SELECT * FROM User WHERE email_address = '$mailadresse' AND activation_key IS NULL;") OR die(mysql_error());
++    $result = mysql_query("SELECT * FROM User WHERE email_address = '$mailaddress' AND activation_key IS NULL;") OR die(mysql_error());
+     if(mysql_num_rows($result) == 1) {
+     header("Location: user_exists.html");
+     mysql_close($link);
+     die();
+     } else {
+         #If registered, but not activated --> Send new key
+-        $result = mysql_query("SELECT * FROM User WHERE email_address = '$mailadresse' AND activation_key IS NOT NULL;") OR die(mysql_error());
++        $result = mysql_query("SELECT * FROM User WHERE email_address = '$mailaddress' AND activation_key IS NOT NULL;") OR die(mysql_error());
+         if(mysql_num_rows($result) == 1) {
+-        $token = generate_activation_key($mailadresse);
++        $token = generate_activation_key($mailaddress);
+         #Resend confirmation mail to user
+-        send_mail($mailadresse, "act_resend", "http://newsletters.yacy-forum.de/activate", $mailadresse, $ip, $token);
++        send_mail($mailaddress, "act_resend", "http://newsletters.yacy-forum.de/activate", $mailaddress, $ip, $token);
+         #Show success
+         header("Location: user_exists_act_resend.html");
+         die();
+@@ -65,34 +76,33 @@
+     
+     #Add new user
+     #-------------------------------------------------------------------------------------------------------------------------    
+-    add_user($mailadresse);
++    add_user($mailaddress);
+     #-------------------------------------------------------------------------------------------------------------------------
+     
+     #Set password
+     #-------------------------------------------------------------------------------------------------------------------------
+-    $plain_pw=$_POST['password'];
+-    update_PW($mailadresse, $plain_pw);
++    update_PW($mailaddress, $plain_pw1);
+     #-------------------------------------------------------------------------------------------------------------------------
+     
+     #Log time of last modification  on dataset
+     #-------------------------------------------------------------------------------------------------------------------------
+-    log_change($mailadresse);
++    log_change($mailaddress);
+     #-------------------------------------------------------------------------------------------------------------------------
+     
+     #Initialize the login values
+     #-------------------------------------------------------------------------------------------------------------------------
+-    log_correct_login($mailadresse, $ip);
++    log_correct_login($mailaddress, $ip);
+     #-------------------------------------------------------------------------------------------------------------------------
+     
+     #Generate and save activation key
+     #-------------------------------------------------------------------------------------------------------------------------
+-    $token = generate_activation_key($mailadresse);
++    $token = generate_activation_key($mailaddress);
+     #-------------------------------------------------------------------------------------------------------------------------
+ 
+     #If we didn't die() up to now, everything was successful
+     
+     #Send confirmation mail to user
+-    send_mail($mailadresse, "register", "http://newsletters.yacy-forum.de/activate", $mailadresse, $ip, $token);
++    send_mail($mailadresse, "register", "http://newsletters.yacy-forum.de/activate", $mailaddress, $ip, $token);
+     
+     #Show success
+     header("Location: success.html");
+
+
+
+From kebron at berlios.de  Mon Jun 26 18:04:40 2006
+From: kebron at berlios.de (kebron at berlios.de)
+Date: Mon, 26 Jun 2006 18:04:40 +0200
+Subject: [Yane-svn] r23 - / manage/subscriptions
+Message-ID: <200606261604.k5QG4eOK022630@sheep.berlios.de>
+
+Author: kebron
+Date: 2006-06-26 18:04:29 +0200 (Mon, 26 Jun 2006)
+New Revision: 23
+
+Modified:
+   manage/subscriptions/index.html
+   style.css
+Log:
+add menu to manage/subscriptions/index.html
+
+Modified: manage/subscriptions/index.html
+===================================================================
+--- manage/subscriptions/index.html	2006-06-26 15:24:41 UTC (rev 22)
++++ manage/subscriptions/index.html	2006-06-26 16:04:29 UTC (rev 23)
+@@ -1,17 +1,30 @@
+-<html>
++<?xml version="1.0" encoding="UTF-8"?>
++<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "xhtml1-transitional.dtd">
++<html xmlns="http://www.w3.org/1999/xhtml">
+ <head>
++<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1" />
+ <title>YaCy newsletter subscriptions</title>
++<link rel="stylesheet" type="text/css" href="../../style.css" />
+ </head>
+ <body>
+-<center><h2>YaCy newsletter subscriptions</h2></center>
++<table class="navigation">
++ <tr>
++  <td style="width:70px"rowspan="2" class="white"><img src="../../yacy.png" alt="YaCy logo" /></td>
++  <td style="width:200px" class="blue"><a href="../../register/index.html">Register a new account</a></td>
++  <td style="width:200px" class="blue"><a href="../../manage/index.html">Manage your account</a></td>
++  <td class="blue"></td>
++ </tr>
++ <tr><td style="height:20px" class="white"></td></tr>
++</table>
+ <br><br><br>
+ <center>
+ 
+-<form method="POST" action="manage_lists.php">
+-
+-		<input name="mailaddress" type="text" size="30" maxlength="255" value="Your email-address" onfocus="this.value=''">&emsp;
+-        <input name="password" type="text" size="30" maxlength="255" value="Your password" onfocus="this.value=''">&emsp;
+-		<input type="submit" name="login" value="Login">
++<form method="post" action="manage_lists.php">
++<table>
++<tr>
++	<td>email adress</td><td><input name="mailaddress" type="text" size="30" maxlength="255" value="Your email-address" onfocus="this.value=''" /></td></tr>
++    <td>password</td><td><input name="password" type="text" size="30" maxlength="255" value="Your password" onfocus="this.value=''" /></td></tr>
++	<td></td><td><input type="submit" name="login" value="Login" /></td></tr>
+ </form>
+ 
+ </center>
+
+Modified: style.css
+===================================================================
+--- style.css	2006-06-26 15:24:41 UTC (rev 22)
++++ style.css	2006-06-26 16:04:29 UTC (rev 23)
+@@ -10,6 +10,7 @@
+ 
+     .navigation {
+     width:100%;
++	text-align: center;
+   }
+     td { 
+     border:0px
+@@ -20,14 +21,12 @@
+  }
+ 
+     td a { 
+-    text-align: center;
+     color: #000000;
+     text-decoration: none;
+-    text-align: center;
++    
+  }
+ 
+     td a:hover { 
+-    text-align: center;
+     color: #ffffff;
+  }
+ 
+
+
+
+From rramthun at berlios.de  Wed Jun 28 16:24:28 2006
+From: rramthun at berlios.de (rramthun at BerliOS)
+Date: Wed, 28 Jun 2006 16:24:28 +0200
+Subject: [Yane-svn] r24 - / config/emails manage/email_and_pwd manage/forgot_pwd register
+Message-ID: <200606281424.k5SEOSDZ015417@sheep.berlios.de>
+
+Author: rramthun
+Date: 2006-06-28 16:24:28 +0200 (Wed, 28 Jun 2006)
+New Revision: 24
+
+Removed:
+   yacy.png
+Modified:
+   config/emails/resend_password.txt
+   functions.php
+   index.php
+   manage/email_and_pwd/enter_changes.php
+   manage/forgot_pwd/send_pw.php
+   register/index.html
+   register/register.php
+Log:
+many updates
+
+Modified: config/emails/resend_password.txt
+===================================================================
+--- config/emails/resend_password.txt	2006-06-26 16:04:29 UTC (rev 23)
++++ config/emails/resend_password.txt	2006-06-28 14:24:28 UTC (rev 24)
+@@ -1,5 +1,5 @@
+ Forgot password
+-You forgot your password and requested a new one.
++You requested a new password.
+ 
+ Here it is:
+ 
+
+Modified: functions.php
+===================================================================
+--- functions.php	2006-06-26 16:04:29 UTC (rev 23)
++++ functions.php	2006-06-28 14:24:28 UTC (rev 24)
+@@ -7,8 +7,8 @@
+     
+     function open_db()
+     {
+-    $handler = mysql_connect(MYSQL_HOST, MYSQL_USER, MYSQL_PASS) OR die("Couldn't establish connection to database. Error: ".mysql_error());
+-    mysql_select_db(MYSQL_DATABASE) OR die("Couldn't use database. Error: ".mysql_error());
++    $handler = mysql_connect(MYSQL_HOST, MYSQL_USER, MYSQL_PASS) OR die("Couldn't establish connection to database. Error: " . mysql_error());
++    mysql_select_db(MYSQL_DATABASE) OR die("Couldn't use database. Error: " . mysql_error());
+     return $handler;
+     }
+     
+@@ -19,7 +19,7 @@
+     $link = open_db();
+     $time=date('Y-m-d H:i:s');
+     $sql="UPDATE User SET last_change = '$time' WHERE CONVERT( email_address USING utf8 ) = '$mailadresse'";
+-    mysql_query($sql);
++    mysql_query($sql) OR die("Couldn't log change. Error: " . mysql_error());
+     mysql_close($link);
+     }
+     
+@@ -38,7 +38,7 @@
+     $link = open_db();
+     $token = md5(uniqid(rand(), true));
+     $sql="UPDATE User SET activation_key = '$token' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress'";
+-    mysql_query($sql) or die('Activation_key save failed: ' . mysql_error());
++    mysql_query($sql) OR die('Activation key save failed: ' . mysql_error());
+     mysql_close($link);
+     return $token;
+     }
+@@ -64,7 +64,7 @@
+        die("Unkown email-template: $topic");
+        
+     $sender = EMAIL_SENDER;
+-
++    
+     if (!$a=="") {
+     $message = str_replace("%1%", $a, $message);
+     }
+@@ -109,7 +109,7 @@
+     function add_user($mailaddress){
+     $link=open_db();
+     $sql="INSERT INTO User (email_address ) VALUE ('$mailaddress')";
+-    mysql_query($sql);
++    mysql_query($sql) OR die("Couldn't add new user to database. Error: " . mysql_error());
+     mysql_close($link);
+     }
+     
+@@ -120,7 +120,7 @@
+     $pw_md5 = md5($plain_pw);
+     $link=open_db();
+     $sql="UPDATE User SET md5_password = '$pw_md5' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress'";
+-    mysql_query($sql);
++    mysql_query($sql) OR die("Couldn't update password. Error: " . mysql_error());
+     mysql_close($link);
+     }
+     
+@@ -130,12 +130,12 @@
+     function log_correct_login($mailaddress, $ip){
+     $link=open_db();
+     $sql="UPDATE User SET last_login_ip = '$ip' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress'";
+-    mysql_query($sql);
++    mysql_query($sql) OR die("Couldn't save last login IP. Error: " . mysql_error());
+     $sql="UPDATE User SET login_failures = '0' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress'";
+-    mysql_query($sql);
++    mysql_query($sql) OR die("Couldn't reset login failures. Error: " . mysql_error());
+     $time=date('Y-m-d H:i:s');
+     $sql="UPDATE User SET last_login = '$time' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress'";
+-    mysql_query($sql);
++    mysql_query($sql) OR die("Couldn't update login timestamp. Error: " . mysql_error());
+     mysql_close($link);
+     }
+     
+
+Modified: index.php
+===================================================================
+--- index.php	2006-06-26 16:04:29 UTC (rev 23)
++++ index.php	2006-06-28 14:24:28 UTC (rev 24)
+@@ -9,7 +9,7 @@
+ <body>
+ <table class="navigation">
+  <tr>
+-  <td style="width:70px"rowspan="2" class="white"><img src="yacy.png" alt="YaCy logo" /></td>
++  <td style="width:70px"rowspan="2" class="white"><img src="config/project_logo.gif" alt="YaCy logo" /></td>
+   <td style="width:200px" class="blue"><a href="register/index.html">Register a new account</a></td>
+   <td style="width:200px" class="blue"><a href="manage/index.html">Manage your account</a></td>
+   <td class="blue"></td>
+
+Modified: manage/email_and_pwd/enter_changes.php
+===================================================================
+--- manage/email_and_pwd/enter_changes.php	2006-06-26 16:04:29 UTC (rev 23)
++++ manage/email_and_pwd/enter_changes.php	2006-06-28 14:24:28 UTC (rev 24)
+@@ -19,35 +19,32 @@
+     
+     #-------------------------------------------------------------------------
+     
+-    #Create random password (8 chars)
+-    $pattern = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+-    $new_plainpw="";
+-    for($i=0;$i<8;$i++)
+-    {
+-      $new_plainpw .= $pattern{rand(0,61)};
+-    }
+-  
+-    $new_md5pw=md5($new_plainpw);
++    $plain_pw=$_POST['password'];
+     
+-    #Open MySQL-DB
+-    $link = open_db();
+-    
+-    #To-DO: Check if user activated his account already
+-    
+-    #Save new random password
+-    $sql="UPDATE User SET md5_password = '$new_md5pw' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress'";
+-
+-    mysql_query($sql) OR die(mysql_error());
+-    
+-    #close DB
+-    mysql_close($link);
+-    
+-    #Send mail to user
+-    send_mail($mailaddress, "resend_password", $new_plainpw);
+-    
+     #-------------------------------------------------------------------------
+-    
+-    #Show success of the subscription
+-    header("Location: success.html");
+ 
+-?>
+\ No newline at end of file
++?>
++
++<html>
++    <head>
++        <title></title>
++    </head>
++    <body>
++        <center>
++            <br />
++            <br />
++            <br />
++            <form method="POST" action="save.php">
++            Old password: <?php echo("<INPUT NAME='old_password' VALUE='$plain_pw'>"); ?> <br>
++            Old email-address: <?php echo("<INPUT NAME='old_mailaddress' VALUE='$mailaddress'>");?> <p>
++            
++            You can change your email-address/your account password here.<br>
++            If you leave a field blank, the old information will be left unchanged.<p>
++            
++            New password: <INPUT NAME='new_password1' VALUE=''> <br>
++            Repeat new password: <INPUT NAME='new_password2' VALUE=''> <br>
++            New email-address: <INPUT NAME='new_mailaddress' VALUE=''> <br>
++            </form>
++        </center>
++    </body>
++</html>
+\ No newline at end of file
+
+Modified: manage/forgot_pwd/send_pw.php
+===================================================================
+--- manage/forgot_pwd/send_pw.php	2006-06-26 16:04:29 UTC (rev 23)
++++ manage/forgot_pwd/send_pw.php	2006-06-28 14:24:28 UTC (rev 24)
+@@ -26,22 +26,10 @@
+     {
+       $new_plainpw .= $pattern{rand(0,61)};
+     }
+-  
+-    $new_md5pw=md5($new_plainpw);
+     
+-    #Open MySQL-DB
+-    $link = open_db();
++    #Save new password
++    update_pw($mailaddress, $new_plainpw);
+     
+-    #To-DO: Check if user activated his account already
+-    
+-    #Save new random password
+-    $sql="UPDATE User SET md5_password = '$new_md5pw' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress'";
+-
+-    mysql_query($sql) OR die(mysql_error());
+-    
+-    #close DB
+-    mysql_close($link);
+-    
+     #Send mail to user
+     send_mail($mailaddress, "resend_password", $new_plainpw);
+     
+
+Modified: register/index.html
+===================================================================
+--- register/index.html	2006-06-26 16:04:29 UTC (rev 23)
++++ register/index.html	2006-06-28 14:24:28 UTC (rev 24)
+@@ -28,7 +28,7 @@
+ 	<tr>
+ 		<td>repeat password</td><td><input name="password2" type="text" size="30" maxlength="255" value="PW" onfocus="this.select()" /></td></tr>
+ 	<tr>
+-		<td></td><td><input type="submit" name="subscribe" value="Subscribe" /></td></tr>
++		<td></td><td><input type="submit" name="register" value="Register new account" /></td></tr>
+ </table>
+ </form>
+ </center>
+
+Modified: register/register.php
+===================================================================
+--- register/register.php	2006-06-26 16:04:29 UTC (rev 23)
++++ register/register.php	2006-06-28 14:24:28 UTC (rev 24)
+@@ -12,7 +12,7 @@
+     
+     #check if the passwords match
+     $plain_pw1=$_POST['password1'];
+-    $plain_pw2=$_POST['password1'];
++    $plain_pw2=$_POST['password2'];
+     
+     if (!(password1==password2)) {
+     header("Location: pws_dont_match.html");
+@@ -27,7 +27,7 @@
+     $mailaddress=trim($mailaddress);
+     
+     #Check email-address for @ and spam-attacks
+-    if (!validate_email($mailaddress)){ 
++    if (!validate_email($mailaddress)) {
+     header("Location: email_wrong.html");
+     die();
+     }
+@@ -60,7 +60,7 @@
+         die();
+     }
+     }
+-
++    
+     #If user doesn't exist:
+     #Create new user in database:
+     # email_address   varchar(255)  	
+
+Deleted: yacy.png
+===================================================================
+(Binary files differ)
+
+
+
+From kebron at berlios.de  Thu Jun 29 19:18:39 2006
+From: kebron at berlios.de (kebron at berlios.de)
+Date: Thu, 29 Jun 2006 19:18:39 +0200
+Subject: [Yane-svn] r25 - manage register
+Message-ID: <200606291718.k5THIdqq027541@sheep.berlios.de>
+
+Author: kebron
+Date: 2006-06-29 19:18:35 +0200 (Thu, 29 Jun 2006)
+New Revision: 25
+
+Modified:
+   manage/index.html
+   register/index.html
+Log:
+fixed link to YaCy logo
+
+Modified: manage/index.html
+===================================================================
+--- manage/index.html	2006-06-28 14:24:28 UTC (rev 24)
++++ manage/index.html	2006-06-29 17:18:35 UTC (rev 25)
+@@ -9,7 +9,7 @@
+ <body>
+ <table class="navigation">
+  <tr>
+-  <td style="width:70px"rowspan="2" class="white"><img src="../yacy.png" alt="YaCy logo" /></td>
++  <td style="width:70px"rowspan="2" class="white"><img src="../config/project_logo.gif" alt="YaCy logo" /></td>
+   <td style="width:200px" class="blue"><a href="../register/index.html">Register a new account</a></td>
+   <td style="width:200px" class="blue"><a href="../manage/index.html">Manage your account</a></td>
+   <td class="blue"></td>
+
+Modified: register/index.html
+===================================================================
+--- register/index.html	2006-06-28 14:24:28 UTC (rev 24)
++++ register/index.html	2006-06-29 17:18:35 UTC (rev 25)
+@@ -9,7 +9,7 @@
+ <body>
+ <table class="navigation">
+  <tr>
+-  <td style="width:70px"rowspan="2" class="white"><img src="../yacy.png" alt="YaCy logo" /></td>
++  <td style="width:70px"rowspan="2" class="white"><img src="../config/project_logo.gif" alt="YaCy logo" /></td>
+   <td style="width:200px" class="blue"><a href="../register/index.html">Register a new account</a></td>
+   <td style="width:200px" class="blue"><a href="../manage/index.html">Manage your account</a></td>
+   <td class="blue"></td>
+
+
+

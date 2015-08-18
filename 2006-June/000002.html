@@ -1,0 +1,236 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yane-svn] r16 - / config generic_errors manage/forgot_pwd manage/subscriptions
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yane-svn/2006-June/index.html" >
+   <LINK REL="made" HREF="mailto:yane-svn%40lists.berlios.de?Subject=Re%3A%20%5BYane-svn%5D%20r16%20-%20/%20config%20generic_errors%20manage/forgot_pwd%20manage/subscriptions&In-Reply-To=%3C200606252016.k5PKGkKD028500%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000001.html">
+   <LINK REL="Next"  HREF="000003.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yane-svn] r16 - / config generic_errors manage/forgot_pwd manage/subscriptions</H1>
+    <B>rramthun at BerliOS</B> 
+    <A HREF="mailto:yane-svn%40lists.berlios.de?Subject=Re%3A%20%5BYane-svn%5D%20r16%20-%20/%20config%20generic_errors%20manage/forgot_pwd%20manage/subscriptions&In-Reply-To=%3C200606252016.k5PKGkKD028500%40sheep.berlios.de%3E"
+       TITLE="[Yane-svn] r16 - / config generic_errors manage/forgot_pwd manage/subscriptions">rramthun at berlios.de
+       </A><BR>
+    <I>Sun Jun 25 22:16:46 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000001.html">[Yane-svn] r15 - /
+</A></li>
+        <LI>Next message: <A HREF="000003.html">[Yane-svn] r17 - / config manage/email_and_pwd manage/subscriptions
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#2">[ date ]</a>
+              <a href="thread.html#2">[ thread ]</a>
+              <a href="subject.html#2">[ subject ]</a>
+              <a href="author.html#2">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: rramthun
+Date: 2006-06-25 22:16:45 +0200 (Sun, 25 Jun 2006)
+New Revision: 16
+
+Added:
+   generic_errors/
+   generic_errors/user_not_activated.html
+   manage/forgot_pwd/email_wrong.html
+   manage/forgot_pwd/success.html
+Modified:
+   Paths_complete.txt
+   config/access_data.php
+   functions.php
+   manage/forgot_pwd/send_pw.php
+   manage/subscriptions/manage_lists.php
+Log:
+Send forgotten pws nearly completed
+
+Modified: Paths_complete.txt
+===================================================================
+--- Paths_complete.txt	2006-06-25 18:58:38 UTC (rev 15)
++++ Paths_complete.txt	2006-06-25 20:16:45 UTC (rev 16)
+@@ -1,5 +1,7 @@
+-Contains a list of directories which are fuly functional and can be designed in HTML part.
++Contains a list of directories which are fully functional and can be designed in HTML part.
+ 
+ register
+ activate
+ manage\subscriptions
++manage\forgot_pwd
++generic_errors
+\ No newline at end of file
+
+Modified: config/access_data.php
+===================================================================
+--- config/access_data.php	2006-06-25 18:58:38 UTC (rev 15)
++++ config/access_data.php	2006-06-25 20:16:45 UTC (rev 16)
+@@ -7,4 +7,5 @@
+     define('MYSQL_PASS',     'enterhere');
+     define('MYSQL_DATABASE', 'enterhere');
+     define('DUMP_PW', 'enterhere');
+-?&gt;
+\ No newline at end of file
++    define('ROOTDIR', '/home/www/newsletters/');
++?&gt;
+
+Modified: functions.php
+===================================================================
+--- functions.php	2006-06-25 18:58:38 UTC (rev 15)
++++ functions.php	2006-06-25 20:16:45 UTC (rev 16)
+@@ -134,4 +134,5 @@
+     }
+     
+     #-------------------------------------------------------------------------------------------------------------------------
++
+ ?&gt;
+\ No newline at end of file
+
+Added: generic_errors/user_not_activated.html
+===================================================================
+--- generic_errors/user_not_activated.html	2006-06-25 18:58:38 UTC (rev 15)
++++ generic_errors/user_not_activated.html	2006-06-25 20:16:45 UTC (rev 16)
+@@ -0,0 +1,8 @@
++&lt;html&gt;
++&lt;head&gt;&lt;title&gt;User not activated&lt;/title&gt;&lt;/head&gt;
++&lt;body&gt;
++This email-address is registered, but not activated.&lt;p&gt;
++
++Please activate your account first as descibed in the registration mail you should have gotten.
++&lt;/body&gt;
++&lt;/html&gt;
+\ No newline at end of file
+
+Added: manage/forgot_pwd/email_wrong.html
+===================================================================
+--- manage/forgot_pwd/email_wrong.html	2006-06-25 18:58:38 UTC (rev 15)
++++ manage/forgot_pwd/email_wrong.html	2006-06-25 20:16:45 UTC (rev 16)
+@@ -0,0 +1,8 @@
++&lt;html&gt;
++&lt;head&gt;&lt;title&gt;Error during sending new password&lt;/title&gt;&lt;/head&gt;
++&lt;body&gt;
++You supplied an invalid email-address.&lt;p&gt;
++
++Please start over &lt;a href=&quot;./&quot;&gt;the lost-my-password function&lt;/a&gt;.
++&lt;/body&gt;
++&lt;/html&gt;
+\ No newline at end of file
+
+Modified: manage/forgot_pwd/send_pw.php
+===================================================================
+--- manage/forgot_pwd/send_pw.php	2006-06-25 18:58:38 UTC (rev 15)
++++ manage/forgot_pwd/send_pw.php	2006-06-25 20:16:45 UTC (rev 16)
+@@ -4,17 +4,47 @@
+      
+     #-------------------------------------------------------------------------
+     
++    #Check the email-address
++    
++    #get email-address from POST
++    $mailaddress=$_POST['mailaddress'];
++    
++    $mailaddress=trim($mailaddress);
++    
++    #Check email-address for @ and spam-attacks
++    if (!validate_email($mailaddress)){ 
++    header(&quot;Location: email_wrong.html&quot;);
++    die();
++    }
++    
++    #-------------------------------------------------------------------------
++    
++    #Create random password (8 chars)
++    $pattern = &quot;1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ&quot;;
++    $new_plainpw=&quot;&quot;;
++    for($i=0;$i&lt;8;$i++)
++    {
++      $new_plainpw .= $pattern{rand(0,61)};
++    }
++  
++    $new_md5pw=md5($new_plainpw);
++    
+     #Open MySQL-DB
+     $link = open_db();
+     
+-    #Save new subscription settings everything
+-    $sql=&quot;UPDATE User SET security_list = '$security', newsletter_list = '$news', announce_list = '$release' WHERE CONVERT( email_address USING utf8 ) = '$mailadresse' AND CONVERT( md5_password USING utf8 ) = '$password'&quot;;
++    #To-DO: Check if user activated his account already
++    
++    #Save new random password
++    $sql=&quot;UPDATE User SET md5_password = '$new_md5pw' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress'&quot;;
+ 
+     mysql_query($sql) OR die(mysql_error());
+     
+     #close DB
+     mysql_close($link);
+     
++    #Send mail to user
++    send_mail($mailaddress, &quot;resend_password&quot;, $new_plainpw);
++    
+     #-------------------------------------------------------------------------
+     
+     #Show success of the subscription
+
+Added: manage/forgot_pwd/success.html
+===================================================================
+--- manage/forgot_pwd/success.html	2006-06-25 18:58:38 UTC (rev 15)
++++ manage/forgot_pwd/success.html	2006-06-25 20:16:45 UTC (rev 16)
+@@ -0,0 +1,7 @@
++&lt;html&gt;
++&lt;head&gt;&lt;title&gt;New password sent successfully&lt;/title&gt;&lt;/head&gt;
++&lt;body&gt;
++A new password has been sent to your email-address.&lt;br&gt;
++You can now login with this password.&lt;p&gt;
++&lt;/body&gt;
++&lt;/html&gt;
+\ No newline at end of file
+
+Modified: manage/subscriptions/manage_lists.php
+===================================================================
+--- manage/subscriptions/manage_lists.php	2006-06-25 18:58:38 UTC (rev 15)
++++ manage/subscriptions/manage_lists.php	2006-06-25 20:16:45 UTC (rev 16)
+@@ -1,10 +1,10 @@
+ &lt;html&gt;
+     &lt;head&gt;
+-        &lt;title&gt;YaCy newsletter subscriptions&lt;/title&gt;
++        &lt;title&gt;Newsletter subscriptions&lt;/title&gt;
+     &lt;/head&gt;
+     &lt;body&gt;
+         &lt;center&gt;
+-            &lt;h2&gt;YaCy newsletter subscriptions&lt;/h2&gt;
++            &lt;h2&gt;Newsletter subscriptions&lt;/h2&gt;
+             &lt;br /&gt;
+             &lt;br /&gt;
+             &lt;br /&gt;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000001.html">[Yane-svn] r15 - /
+</A></li>
+	<LI>Next message: <A HREF="000003.html">[Yane-svn] r17 - / config manage/email_and_pwd manage/subscriptions
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#2">[ date ]</a>
+              <a href="thread.html#2">[ thread ]</a>
+              <a href="subject.html#2">[ subject ]</a>
+              <a href="author.html#2">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yane-svn">More information about the Yane-svn
+mailing list</a><br>
+</body></html>

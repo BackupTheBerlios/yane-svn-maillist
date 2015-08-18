@@ -1,0 +1,216 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yane-svn] r26 - / manage/email_and_pwd register
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yane-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:yane-svn%40lists.berlios.de?Subject=Re%3A%20%5BYane-svn%5D%20r26%20-%20/%20manage/email_and_pwd%20register&In-Reply-To=%3C200607191513.k6JFDMNo011160%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   
+   <LINK REL="Next"  HREF="000013.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yane-svn] r26 - / manage/email_and_pwd register</H1>
+    <B>rramthun at BerliOS</B> 
+    <A HREF="mailto:yane-svn%40lists.berlios.de?Subject=Re%3A%20%5BYane-svn%5D%20r26%20-%20/%20manage/email_and_pwd%20register&In-Reply-To=%3C200607191513.k6JFDMNo011160%40sheep.berlios.de%3E"
+       TITLE="[Yane-svn] r26 - / manage/email_and_pwd register">rramthun at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul 19 17:13:22 CEST 2006</I>
+    <P><UL>
+        
+        <LI>Next message: <A HREF="000013.html">[Yane-svn] r27 - / activate config config/emails dump	generic_errors manage/subscriptions register
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#12">[ date ]</a>
+              <a href="thread.html#12">[ thread ]</a>
+              <a href="subject.html#12">[ subject ]</a>
+              <a href="author.html#12">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: rramthun
+Date: 2006-07-19 17:13:21 +0200 (Wed, 19 Jul 2006)
+New Revision: 26
+
+Added:
+   install.php
+   manage/email_and_pwd/save.php
+Modified:
+   register/register.php
+Log:
+First version of new install script
+
+Added: install.php
+===================================================================
+--- install.php	2006-06-29 17:18:35 UTC (rev 25)
++++ install.php	2006-07-19 15:13:21 UTC (rev 26)
+@@ -0,0 +1,53 @@
++&lt;?php
++    #Available fields in the database:
++    # email_address   varchar(255)  	
++    # md5_password   varchar(32)
++    # security_list   	tinyint(1) 
++	# announce_list  	tinyint(1)	  	
++	# newsletter_list  tinyint(1) 
++	# last_change  datetime
++	# last_login  datetime 
++	# last_login_ip  varchar(16) 
++	# login_failures  int(11) 
++	# activation_key  varchar(12)  
++    
++
++	require 'functions.php';
++	
++	#-------------------------------------------------------------------------------------------------------------------------
++	
++	#Open MySQL-DB
++    $link = open_db();
++	
++	#The command to create the table
++	mysql_query(&quot;
++	CREATE TABLE Yane
++(
++    email_address varchar(255),  	
++    md5_password varchar(32),
++    security_list tinyint(1),
++	announce_list tinyint(1),  	
++	newsletter_list tinyint(1),
++	last_change datetime,
++	last_login datetime,
++	last_login_ip varchar(16),
++	login_failures int(11),
++	activation_key varchar(12)
++)
++&quot;) OR die(mysql_error());
++	
++	#Close the DB
++	mysql_close($link);
++?&gt;
++CREATE TABLE Yane (
++  email_address varchar(255) character set utf8 default NULL,
++  md5_password varchar(31) character set ascii default NULL,
++  security_list tinyint(1) default NULL,
++  announce_list tinyint(1) default NULL,
++  newsletter_list tinyint(1) default NULL,
++  last_change datetime default NULL,
++  last_login datetime default NULL,
++  last_login_ip varchar(16) character set ascii default NULL,
++  login_failures int(11) default NULL,
++  activation_key varchar(31) character set ascii default NULL
++) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+Added: manage/email_and_pwd/save.php
+===================================================================
+--- manage/email_and_pwd/save.php	2006-06-29 17:18:35 UTC (rev 25)
++++ manage/email_and_pwd/save.php	2006-07-19 15:13:21 UTC (rev 26)
+@@ -0,0 +1,50 @@
++&lt;?php
++    
++    include '../../functions.php';
++     
++    #-------------------------------------------------------------------------
++    
++    #Check the email-address
++    
++    #get email-address from POST
++    $mailaddress=$_POST['mailaddress'];
++    
++    $mailaddress=trim($mailaddress);
++    
++    #Check email-address for @ and spam-attacks
++    if (!validate_email($mailaddress)){ 
++    header(&quot;Location: email_wrong.html&quot;);
++    die();
++    }
++    
++    #-------------------------------------------------------------------------
++    
++    $plain_pw=$_POST['password'];
++    
++    #-------------------------------------------------------------------------
++
++?&gt;
++
++&lt;html&gt;
++    &lt;head&gt;
++        &lt;title&gt;&lt;/title&gt;
++    &lt;/head&gt;
++    &lt;body&gt;
++        &lt;center&gt;
++            &lt;br /&gt;
++            &lt;br /&gt;
++            &lt;br /&gt;
++            &lt;form method=&quot;POST&quot; action=&quot;save.php&quot;&gt;
++            Old password: &lt;?php echo(&quot;&lt;INPUT NAME='old_password' VALUE='$plain_pw'&gt;&quot;); ?&gt; &lt;br&gt;
++            Old email-address: &lt;?php echo(&quot;&lt;INPUT NAME='old_mailaddress' VALUE='$mailaddress'&gt;&quot;);?&gt; &lt;p&gt;
++            
++            You can change your email-address/your account password here.&lt;br&gt;
++            If you leave a field blank, the old information will be left unchanged.&lt;p&gt;
++            
++            New password: &lt;INPUT NAME='new_password1' VALUE=''&gt; &lt;br&gt;
++            Repeat new password: &lt;INPUT NAME='new_password2' VALUE=''&gt; &lt;br&gt;
++            New email-address: &lt;INPUT NAME='new_mailaddress' VALUE=''&gt; &lt;br&gt;
++            &lt;/form&gt;
++        &lt;/center&gt;
++    &lt;/body&gt;
++&lt;/html&gt;
+
+Modified: register/register.php
+===================================================================
+--- register/register.php	2006-06-29 17:18:35 UTC (rev 25)
++++ register/register.php	2006-07-19 15:13:21 UTC (rev 26)
+@@ -62,17 +62,6 @@
+     }
+     
+     #If user doesn't exist:
+-    #Create new user in database:
+-    # email_address   varchar(255)  	
+-    # md5_password   varchar(32)
+-    # security_list   	tinyint(1) 
+-	# announce_list  	tinyint(1)	  	
+-	# newsletter_list  tinyint(1) 
+-	# last_change  datetime
+-	# last_login  datetime 
+-	# last_login_ip  varchar(16) 
+-	# login_failures  int(11) 
+-	# activation_key  varchar(12)  
+     
+     #Add new user
+     #-------------------------------------------------------------------------------------------------------------------------    
+@@ -107,4 +96,4 @@
+     #Show success
+     header(&quot;Location: success.html&quot;);
+     
+-?&gt;
+\ No newline at end of file
++?&gt;
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	
+	<LI>Next message: <A HREF="000013.html">[Yane-svn] r27 - / activate config config/emails dump	generic_errors manage/subscriptions register
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#12">[ date ]</a>
+              <a href="thread.html#12">[ thread ]</a>
+              <a href="subject.html#12">[ subject ]</a>
+              <a href="author.html#12">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yane-svn">More information about the Yane-svn
+mailing list</a><br>
+</body></html>

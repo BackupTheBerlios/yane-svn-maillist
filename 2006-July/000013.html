@@ -1,0 +1,710 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Yane-svn] r27 - / activate config config/emails dump	generic_errors manage/subscriptions register
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yane-svn/2006-July/index.html" >
+   <LINK REL="made" HREF="mailto:yane-svn%40lists.berlios.de?Subject=Re%3A%20%5BYane-svn%5D%20r27%20-%20/%20activate%20config%20config/emails%20dump%0A%09generic_errors%20manage/subscriptions%20register&In-Reply-To=%3C200607201555.k6KFtt66031869%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000012.html">
+   
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Yane-svn] r27 - / activate config config/emails dump	generic_errors manage/subscriptions register</H1>
+    <B>rramthun at BerliOS</B> 
+    <A HREF="mailto:yane-svn%40lists.berlios.de?Subject=Re%3A%20%5BYane-svn%5D%20r27%20-%20/%20activate%20config%20config/emails%20dump%0A%09generic_errors%20manage/subscriptions%20register&In-Reply-To=%3C200607201555.k6KFtt66031869%40sheep.berlios.de%3E"
+       TITLE="[Yane-svn] r27 - / activate config config/emails dump	generic_errors manage/subscriptions register">rramthun at mail.berlios.de
+       </A><BR>
+    <I>Thu Jul 20 17:55:55 CEST 2006</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000012.html">[Yane-svn] r26 - / manage/email_and_pwd register
+</A></li>
+        
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#13">[ date ]</a>
+              <a href="thread.html#13">[ thread ]</a>
+              <a href="subject.html#13">[ subject ]</a>
+              <a href="author.html#13">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: rramthun
+Date: 2006-07-20 17:55:54 +0200 (Thu, 20 Jul 2006)
+New Revision: 27
+
+Added:
+   generic_errors/invalid_emailaddress.html
+   how_it_works.txt
+Modified:
+   Paths_complete.txt
+   activate/activate.php
+   config/access_data.php
+   config/emails/act_resend.txt
+   config/emails/activated.txt
+   config/emails/register.txt
+   config/emails/resend_password.txt
+   dump/release.php
+   functions.php
+   install.php
+   manage/subscriptions/manage_lists.php
+   manage/subscriptions/save.php
+   register/register.php
+Log:
+Huge changes, too much to write :-D
+
+Modified: Paths_complete.txt
+===================================================================
+--- Paths_complete.txt	2006-07-19 15:13:21 UTC (rev 26)
++++ Paths_complete.txt	2006-07-20 15:55:54 UTC (rev 27)
+@@ -1,7 +0,0 @@
+-Contains a list of directories which are fully functional and can be designed in HTML part.
+-
+-register
+-activate
+-manage\subscriptions
+-manage\forgot_pwd
+-generic_errors
+\ No newline at end of file
+
+Modified: activate/activate.php
+===================================================================
+--- activate/activate.php	2006-07-19 15:13:21 UTC (rev 26)
++++ activate/activate.php	2006-07-20 15:55:54 UTC (rev 27)
+@@ -10,11 +10,13 @@
+     die();
+     }
+     
++	#-------------------------------------------------------------------------------------------------------------------------
++	
+     #Open MySQL-DB
+     $link = open_db();
+     
+     #Has someone this activation key?
+-    $result = mysql_query(&quot;SELECT * FROM User WHERE activation_key = CONVERT( _utf8 '$act_key' USING latin1 ) COLLATE latin1_swedish_ci&quot;) OR die(mysql_error());
++    $result = mysql_query(&quot;SELECT * FROM Yane WHERE activation_key = '$act_key'&quot;) OR die(mysql_error());
+     #If no, show error
+     if(mysql_num_rows($result) == 0) {
+     mysql_close($link);
+@@ -22,17 +24,24 @@
+     die();
+     } else {
+     #Get mailaddress
+-    $result = mysql_query(&quot;SELECT email_address FROM User WHERE activation_key = '$act_key';&quot;) OR die(mysql_error());
++    $result = mysql_query(&quot;SELECT email_address FROM Yane WHERE activation_key = '$act_key';&quot;) OR die(mysql_error());
+     $row = mysql_fetch_assoc($result);
+     
+     #If yes, set activation-key to NULL
+-    mysql_query(&quot;UPDATE User SET activation_key = NULL WHERE CONVERT( activation_key USING utf8 ) = '$act_key'&quot;) OR die(mysql_error());
++    mysql_query(&quot;UPDATE Yane SET activation_key = NULL WHERE CONVERT( activation_key USING utf8 ) = '$act_key'&quot;) OR die(mysql_error());
+     mysql_close($link);
++	
++	# Log the correct login
++	log_correct_login($row['email_address'], $_SERVER['REMOTE_ADDR']);
++	# Set account modification-time
++	log_change($row['email_address']);
+     
++	#-------------------------------------------------------------------------------------------------------------------------
++	
+     #Send mail
+-    send_mail($row['email_address'], &quot;activated&quot;, &quot;<A HREF="http://newsletters.yacy-forum.de/activate">http://newsletters.yacy-forum.de/activate</A>&quot;);
++    #send_mail($row['email_address'], &quot;activated&quot;, &quot;<A HREF="http://newsletters.yacy-forum.de/activate">http://newsletters.yacy-forum.de/activate</A>&quot;);
+     
+     header(&quot;Location: success.html&quot;);
+     }
+ 
+-?&gt;
+\ No newline at end of file
++?&gt;
+
+Modified: config/access_data.php
+===================================================================
+--- config/access_data.php	2006-07-19 15:13:21 UTC (rev 26)
++++ config/access_data.php	2006-07-20 15:55:54 UTC (rev 27)
+@@ -2,10 +2,11 @@
+     // config.php
+     error_reporting(E_ALL);
+ 
+-    define('MYSQL_HOST',     'enterhere');
+-    define('MYSQL_USER',     'enterhere');
+-    define('MYSQL_PASS',     'enterhere');
+-    define('MYSQL_DATABASE', 'enterhere');
++    define('MYSQL_HOST',     'localhost');
++    define('MYSQL_USER',     'root');
++    define('MYSQL_PASS',     '');
++    define('MYSQL_DATABASE', 'test');
+     define('DUMP_PW', 'enterhere');
+-    define('ROOTDIR', '/home/www/newsletters/');
++    define('ROOTDIR', '/www/htdocs/');
++	define('EXTERNAL_ADDRESS', '<A HREF="http://127.0.0.1">http://127.0.0.1</A>');
+ ?&gt;
+
+Modified: config/emails/act_resend.txt
+===================================================================
+--- config/emails/act_resend.txt	2006-07-19 15:13:21 UTC (rev 26)
++++ config/emails/act_resend.txt	2006-07-20 15:55:54 UTC (rev 27)
+@@ -2,6 +2,14 @@
+ You registered this email-address on the YaCy newsletter system.
+ 
+ You must activate your account, before you can use it.
++
++You can:
++
++1. Activate by clicking here: %base_url%/activate/activate.php?act_key=%4%
++
++OR
++
++2.Activate manually
+ To do so, visit %1% and enter the confirmation code there.
+ 
+ Registered email-address: %2%
+@@ -9,7 +17,9 @@
+ Confirmation website: %1%
+ Confirmation code: %4%
+ 
++adresse/
++
+ If someone else registered your address on our system, delete this email and you won't get any mail from us in the future.
+ 
+ Regards,
+-the YaCy newsletter team
+\ No newline at end of file
++the YaCy newsletter team
+
+Modified: config/emails/activated.txt
+===================================================================
+--- config/emails/activated.txt	2006-07-19 15:13:21 UTC (rev 26)
++++ config/emails/activated.txt	2006-07-20 15:55:54 UTC (rev 27)
+@@ -2,7 +2,7 @@
+ Thank you for activating your YaCy newsletter account.
+ You now can login with the login-data supplied in the earlier mail.
+ 
+-Up to now, you *have not* been subscribed to any list, please go to <A HREF="http://newsletters.yacy-forum.de/manage/subscriptions">http://newsletters.yacy-forum.de/manage/subscriptions</A> now and choose the newsletters you want to receive in the future.
++Up to now, you *have not* been subscribed to any list, please go to %base_url%/manage/subscriptions now and choose the newsletters you want to receive in the future.
+ 
+ Kind regards,
+-the YaCy newsletter team
+\ No newline at end of file
++the YaCy newsletter team
+
+Modified: config/emails/register.txt
+===================================================================
+--- config/emails/register.txt	2006-07-19 15:13:21 UTC (rev 26)
++++ config/emails/register.txt	2006-07-20 15:55:54 UTC (rev 27)
+@@ -2,6 +2,14 @@
+ You registered this email-address on the YaCy newsletter system.
+ 
+ You must activate your account, before you can use it.
++
++You can:
++
++1. Activate by clicking here: %base_url%/activate/activate.php?act_key=%4%
++
++OR
++
++2.Activate manually
+ To do so, visit %1% and enter the confirmation code there.
+ 
+ Registered email-address: %2%
+@@ -9,7 +17,9 @@
+ Confirmation website: %1%
+ Confirmation code: %4%
+ 
++adresse/
++
+ If someone else registered your address on our system, delete this email and you won't get any mail from us in the future.
+ 
+ Regards,
+-the YaCy newsletter team
+\ No newline at end of file
++the YaCy newsletter team
+
+Modified: config/emails/resend_password.txt
+===================================================================
+--- config/emails/resend_password.txt	2006-07-19 15:13:21 UTC (rev 26)
++++ config/emails/resend_password.txt	2006-07-20 15:55:54 UTC (rev 27)
+@@ -1,9 +1,9 @@
+ Forgot password
+-You requested a new password.
++You requested a new password for %base_url%.
+ 
+ Here it is:
+ 
+ New password: %1%
+ --
+ Kind regards,
+-the YaCy newsletter team
+\ No newline at end of file
++the YaCy newsletter team
+
+Modified: dump/release.php
+===================================================================
+--- dump/release.php	2006-07-19 15:13:21 UTC (rev 26)
++++ dump/release.php	2006-07-20 15:55:54 UTC (rev 27)
+@@ -4,7 +4,7 @@
+ 
+ $handler = open_db();
+ 
+-$sql = &quot;SELECT email_address FROM User WHERE announce_list = 1&quot;;
++$sql = &quot;SELECT email_address FROM Yane WHERE announce_list = 1&quot;;
+     $result = mysql_query($sql) OR die(mysql_error());
+     if(mysql_num_rows($result)) {
+         while($row = mysql_fetch_assoc($result)) {
+@@ -16,4 +16,4 @@
+     }
+     
+     mysql_close($link);
+-?&gt;
+\ No newline at end of file
++?&gt;
+
+Modified: functions.php
+===================================================================
+--- functions.php	2006-07-19 15:13:21 UTC (rev 26)
++++ functions.php	2006-07-20 15:55:54 UTC (rev 27)
+@@ -1,7 +1,7 @@
+ &lt;?php
+ 
+-    include 'config/listdata.php';
+-    include 'config/access_data.php';
++    require 'config/listdata.php';
++    require 'config/access_data.php';
+     
+     #-------------------------------------------------------------------------------------------------------------------------
+     
+@@ -18,7 +18,7 @@
+     {
+     $link = open_db();
+     $time=date('Y-m-d H:i:s');
+-    $sql=&quot;UPDATE User SET last_change = '$time' WHERE CONVERT( email_address USING utf8 ) = '$mailadresse'&quot;;
++    $sql=&quot;UPDATE Yane SET last_change = '$time' WHERE CONVERT( email_address USING utf8 ) = '$mailadresse'&quot;;
+     mysql_query($sql) OR die(&quot;Couldn't log change. Error: &quot; . mysql_error());
+     mysql_close($link);
+     }
+@@ -27,7 +27,7 @@
+     
+     function show_version()
+     {
+-    echo(&quot;Powered by &lt;a href='<A HREF="http://developer.berlios.de/projects/yane/">http://developer.berlios.de/projects/yane/</A>'&gt;Yane&lt;/a&gt; Ver. 0.5&quot;);
++    echo(&quot;Powered by &lt;a href='<A HREF="http://developer.berlios.de/projects/yane/">http://developer.berlios.de/projects/yane/</A>'&gt;Yane&lt;/a&gt; Ver. 0.5.1&quot;);
+     }
+     
+     #-------------------------------------------------------------------------------------------------------------------------
+@@ -37,7 +37,7 @@
+     {
+     $link = open_db();
+     $token = md5(uniqid(rand(), true));
+-    $sql=&quot;UPDATE User SET activation_key = '$token' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress'&quot;;
++    $sql=&quot;UPDATE Yane SET activation_key = '$token' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress'&quot;;
+     mysql_query($sql) OR die('Activation key save failed: ' . mysql_error());
+     mysql_close($link);
+     return $token;
+@@ -65,6 +65,7 @@
+        
+     $sender = EMAIL_SENDER;
+     
++    $message = str_replace(&quot;%base_url%&quot;, EXTERNAL_ADDRESS, $message);	
+     if (!$a==&quot;&quot;) {
+     $message = str_replace(&quot;%1%&quot;, $a, $message);
+     }
+@@ -83,9 +84,9 @@
+     if (!$f==&quot;&quot;) {
+     $message = str_replace(&quot;%6%&quot;, $d, $message);
+     }
+-    #Send the mail or, in case of error, print it.
++    #Send the mail, or, in case of error, print it.
+     if (!mail($mailaddress, $subject, $message, &quot;From: $sender\r\n&quot;))
+-    die(&quot;Error queuing mail. Here the content: $message&quot;);
++    die(&quot;Error queuing mail. Here the content, please read it, as if it were an email: $message&quot;);
+     
+     }
+     
+@@ -98,7 +99,8 @@
+     if (preg_match(&quot;/^[\w.+-]{1,64}\@[\w.-]{1,255}\.[a-z]{2,6}$/&quot;,$mailaddress)){ 
+     return true;
+     } else {
+-    return false;
++    header(&quot;Location: &quot; . EXTERNAL_ADDRESS . &quot;/generic_errors/invalid_emailaddress.html&quot;);
++	die();
+     }
+     
+     }
+@@ -108,7 +110,7 @@
+     #Adds a new user to the database
+     function add_user($mailaddress){
+     $link=open_db();
+-    $sql=&quot;INSERT INTO User (email_address ) VALUE ('$mailaddress')&quot;;
++    $sql=&quot;INSERT INTO Yane (email_address ) VALUE ('$mailaddress')&quot;;
+     mysql_query($sql) OR die(&quot;Couldn't add new user to database. Error: &quot; . mysql_error());
+     mysql_close($link);
+     }
+@@ -119,26 +121,26 @@
+     function update_pw($mailaddress, $plain_pw){
+     $pw_md5 = md5($plain_pw);
+     $link=open_db();
+-    $sql=&quot;UPDATE User SET md5_password = '$pw_md5' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress'&quot;;
++    $sql=&quot;UPDATE Yane SET md5_password = '$pw_md5' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress'&quot;;
+     mysql_query($sql) OR die(&quot;Couldn't update password. Error: &quot; . mysql_error());
+     mysql_close($link);
+     }
+     
+     #-------------------------------------------------------------------------------------------------------------------------
+     
+-    #Logs the IP of the user and sets login_failures to 0
++    #Logs the IP of the user, sets login_failures to 0 and and sets the login time
+     function log_correct_login($mailaddress, $ip){
+     $link=open_db();
+-    $sql=&quot;UPDATE User SET last_login_ip = '$ip' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress'&quot;;
++    $sql=&quot;UPDATE Yane SET last_login_ip = '$ip' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress'&quot;;
+     mysql_query($sql) OR die(&quot;Couldn't save last login IP. Error: &quot; . mysql_error());
+-    $sql=&quot;UPDATE User SET login_failures = '0' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress'&quot;;
++    $sql=&quot;UPDATE Yane SET login_failures = '0' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress'&quot;;
+     mysql_query($sql) OR die(&quot;Couldn't reset login failures. Error: &quot; . mysql_error());
+     $time=date('Y-m-d H:i:s');
+-    $sql=&quot;UPDATE User SET last_login = '$time' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress'&quot;;
++    $sql=&quot;UPDATE Yane SET last_login = '$time' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress'&quot;;
+     mysql_query($sql) OR die(&quot;Couldn't update login timestamp. Error: &quot; . mysql_error());
+     mysql_close($link);
+     }
+     
+     #-------------------------------------------------------------------------------------------------------------------------
+ 
+-?&gt;
+\ No newline at end of file
++?&gt;
+
+Added: generic_errors/invalid_emailaddress.html
+===================================================================
+--- generic_errors/invalid_emailaddress.html	2006-07-19 15:13:21 UTC (rev 26)
++++ generic_errors/invalid_emailaddress.html	2006-07-20 15:55:54 UTC (rev 27)
+@@ -0,0 +1,6 @@
++&lt;html&gt;
++&lt;head&gt;&lt;title&gt;Invalid E-Mail-address&lt;/title&gt;&lt;/head&gt;
++&lt;body&gt;
++This email-address is invalid, please be sure you didn't misspell it.&lt;p&gt;
++&lt;/body&gt;
++&lt;/html&gt;
+
+Added: how_it_works.txt
+===================================================================
+--- how_it_works.txt	2006-07-19 15:13:21 UTC (rev 26)
++++ how_it_works.txt	2006-07-20 15:55:54 UTC (rev 27)
+@@ -0,0 +1,35 @@
++Registrierung:
++
++Mailadresse und zweimal das PW abfragen
++
++Auf bereits angemeldete Adresse pr&#252;fen 
++--&gt; Falls angemeldet und aktiviert: die()
++--&gt; Falls angemeldet und nicht aktiviert: Aktivierungscode neu senden
++
++--&gt; Wenn die PWs nicht &#252;bereinstimmen, dann nochmal von vorne
++--&gt; Wenn die PWs &#252;bereinstimmen, dann kommen die Datenbankeintr&#228;ge:
++
++Mailadresse speichern
++
++Passwort als MD5 speichern
++
++&#196;ndern der Daten loggen
++
++Korrekten Login loggen
++
++Aktivierungskey erzeugen, speichern und zumailen.
++
++Registrierung beendet.
++
++
++Aktivierung:
++
++&#220;berpr&#252;fung des Keys auf ein g&#252;ltiges Format
++--&gt; Falls ung&#252;ltig, Weiterleitung auf Fehlerseite
++--&gt; Falls g&#252;ltig, weiter.
++
++Abgleich, ob Key in der Datenbank
++--&gt; Falls nein, Weiterleitung auf Fehlerseite
++--&gt; Falls ja, wird der Key geNULLt und eine eMail an den Besitzer verschickt
++--&gt; Die Aktivierung wird als korrekter Login gewertet und dementsprechend geloggt
++--&gt; Die Modifikationszeit des Nutzers wird auf den jetzigen Zeitpunkt gesetzt.
+
+Modified: install.php
+===================================================================
+--- install.php	2006-07-19 15:13:21 UTC (rev 26)
++++ install.php	2006-07-20 15:55:54 UTC (rev 27)
+@@ -1,5 +1,5 @@
+ &lt;?php
+-    #Available fields in the database:
++    # Available fields in the database:
+     # email_address   varchar(255)  	
+     # md5_password   varchar(32)
+     # security_list   	tinyint(1) 
+@@ -8,9 +8,10 @@
+ 	# last_change  datetime
+ 	# last_login  datetime 
+ 	# last_login_ip  varchar(16) 
++	# last_failure_ip varchar(16)
+ 	# login_failures  int(11) 
+-	# activation_key  varchar(12)  
+-    
++	# account_locked_until datetime
++	# activation_key  varchar(32)  
+ 
+ 	require 'functions.php';
+ 	
+@@ -19,35 +20,33 @@
+ 	#Open MySQL-DB
+     $link = open_db();
+ 	
++	#Delete the old table
++	mysql_query(&quot;DROP TABLE Yane&quot;);
++	echo &quot;Removed old table......... &quot;;
++	
+ 	#The command to create the table
+ 	mysql_query(&quot;
+ 	CREATE TABLE Yane
+ (
+-    email_address varchar(255),  	
+-    md5_password varchar(32),
+-    security_list tinyint(1),
+-	announce_list tinyint(1),  	
+-	newsletter_list tinyint(1),
+-	last_change datetime,
+-	last_login datetime,
+-	last_login_ip varchar(16),
+-	login_failures int(11),
+-	activation_key varchar(12)
++    email_address varchar(255) character set utf8 default NULL,  	
++    md5_password varchar(31) character set ascii default NULL,
++    security_list tinyint(1) default 0,
++	announce_list tinyint(1) default 0,  	
++	newsletter_list tinyint(1) default 0,
++	last_change datetime default NULL,
++	last_login datetime default NULL,
++	last_login_ip varchar(16) default NULL,
++	last_failure_ip varchar(16) default NULL,
++	account_locked_until datetime default NULL,
++	login_failures int(11) default 0,
++	activation_key varchar(32) character set ascii default NULL
+ )
+-&quot;) OR die(mysql_error());
++&quot;) OR die(&quot;Couldn't create new Yane table:&quot; . mysql_error());
+ 	
++	echo &quot;Created the new table........... &quot;;
++	
+ 	#Close the DB
+ 	mysql_close($link);
++	
++	echo &quot;Done.&quot;;
+ ?&gt;
+-CREATE TABLE Yane (
+-  email_address varchar(255) character set utf8 default NULL,
+-  md5_password varchar(31) character set ascii default NULL,
+-  security_list tinyint(1) default NULL,
+-  announce_list tinyint(1) default NULL,
+-  newsletter_list tinyint(1) default NULL,
+-  last_change datetime default NULL,
+-  last_login datetime default NULL,
+-  last_login_ip varchar(16) character set ascii default NULL,
+-  login_failures int(11) default NULL,
+-  activation_key varchar(31) character set ascii default NULL
+-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+Modified: manage/subscriptions/manage_lists.php
+===================================================================
+--- manage/subscriptions/manage_lists.php	2006-07-19 15:13:21 UTC (rev 26)
++++ manage/subscriptions/manage_lists.php	2006-07-20 15:55:54 UTC (rev 27)
+@@ -38,7 +38,7 @@
+     #Which lists are selected?
+     
+     #security list?
+-    $result = mysql_query(&quot;SELECT * FROM User WHERE email_address = '$mailaddress' AND security_list = 1 AND md5_password = '$password';&quot;);
++    $result = mysql_query(&quot;SELECT * FROM Yane WHERE email_address = '$mailaddress' AND security_list = 1 AND md5_password = '$password';&quot;);
+     if(mysql_num_rows($result) &gt; 0) {
+         $seclist = true;
+     } else {
+@@ -46,7 +46,7 @@
+     }
+     
+     #announce list?
+-    $result = mysql_query(&quot;SELECT * FROM User WHERE email_address = '$mailaddress' AND announce_list = 1 AND md5_password = '$password';&quot;);
++    $result = mysql_query(&quot;SELECT * FROM Yane WHERE email_address = '$mailaddress' AND announce_list = 1 AND md5_password = '$password';&quot;);
+     if(mysql_num_rows($result) &gt; 0) {
+         $ann_list = true;
+     } else {
+@@ -54,7 +54,7 @@
+     }
+     
+     # newsletter list?
+-    $result = mysql_query(&quot;SELECT * FROM User WHERE email_address = '$mailaddress' AND newsletter_list = 1 AND md5_password = '$password';&quot;);
++    $result = mysql_query(&quot;SELECT * FROM Yane WHERE email_address = '$mailaddress' AND newsletter_list = 1 AND md5_password = '$password';&quot;);
+     if(mysql_num_rows($result) &gt; 0) {
+         $nl_list = true;
+     } else {
+@@ -119,4 +119,4 @@
+             &lt;/form&gt;
+         &lt;/center&gt;
+     &lt;/body&gt;
+-&lt;/html&gt;
+\ No newline at end of file
++&lt;/html&gt;
+
+Modified: manage/subscriptions/save.php
+===================================================================
+--- manage/subscriptions/save.php	2006-07-19 15:13:21 UTC (rev 26)
++++ manage/subscriptions/save.php	2006-07-20 15:55:54 UTC (rev 27)
+@@ -45,7 +45,7 @@
+     $link = open_db();
+     
+     #Save new subscription settings everything
+-    $sql=&quot;UPDATE User SET security_list = '$security', newsletter_list = '$news', announce_list = '$release' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress' AND CONVERT( md5_password USING utf8 ) = '$password'&quot;;
++    $sql=&quot;UPDATE Yane SET security_list = '$security', newsletter_list = '$news', announce_list = '$release' WHERE CONVERT( email_address USING utf8 ) = '$mailaddress' AND CONVERT( md5_password USING utf8 ) = '$password'&quot;;
+ 
+     mysql_query($sql) OR die(mysql_error());
+     
+@@ -62,4 +62,4 @@
+     #Show success of the subscription
+     header(&quot;Location: success.html&quot;);
+ 
+-?&gt;
+\ No newline at end of file
++?&gt;
+
+Modified: register/register.php
+===================================================================
+--- register/register.php	2006-07-19 15:13:21 UTC (rev 26)
++++ register/register.php	2006-07-20 15:55:54 UTC (rev 27)
+@@ -2,26 +2,10 @@
+ 
+     include '../functions.php';
+     
+-    #To create a new user we have to do the following:
+-    #Check, if this address is already registered
+-    #If yes, look if activation suceeded.
+-    #If yes, die.
+-    #If no, resend the activation code
+-    
++ 
+     #-------------------------------------------------------------------------------------------------------------------------
+     
+-    #check if the passwords match
+-    $plain_pw1=$_POST['password1'];
+-    $plain_pw2=$_POST['password2'];
+-    
+-    if (!(password1==password2)) {
+-    header(&quot;Location: pws_dont_match.html&quot;);
+-    die();
+-    }
+-    
+-    #-------------------------------------------------------------------------------------------------------------------------
+-    
+-    #get email-address from POST
++	#get email-address from POST
+     $mailaddress=$_POST['mailaddress'];
+     
+     $mailaddress=trim($mailaddress);
+@@ -31,26 +15,22 @@
+     header(&quot;Location: email_wrong.html&quot;);
+     die();
+     }
+-    
+-    #-------------------------------------------------------------------------------------------------------------------------
+-    
+-    #Get the user's IP
+-    $ip=$_SERVER['REMOTE_ADDR'];
+-    
+-    #-------------------------------------------------------------------------------------------------------------------------
+-    
+-    #Open MySQL-DB
++	
++	#-------------------------------------------------------------------------------------------------------------------------
++	
++	#Open MySQL-DB
+     $link = open_db();
+ 
+     #Check if the user already has registered
+-    $result = mysql_query(&quot;SELECT * FROM User WHERE email_address = '$mailaddress' AND activation_key IS NULL;&quot;) OR die(mysql_error());
+-    if(mysql_num_rows($result) == 1) {
++    $result = mysql_query(&quot;SELECT * FROM Yane WHERE email_address = '$mailaddress' AND activation_key IS NULL;&quot;) OR die(mysql_error());
++    # User exists and is activated
++	if(mysql_num_rows($result) == 1) {
+     header(&quot;Location: user_exists.html&quot;);
+     mysql_close($link);
+     die();
+     } else {
+-        #If registered, but not activated --&gt; Send new key
+-        $result = mysql_query(&quot;SELECT * FROM User WHERE email_address = '$mailaddress' AND activation_key IS NOT NULL;&quot;) OR die(mysql_error());
++        # User exists, but is not activated --&gt; Send new key
++        $result = mysql_query(&quot;SELECT * FROM Yane WHERE email_address = '$mailaddress' AND activation_key IS NOT NULL;&quot;) OR die(mysql_error());
+         if(mysql_num_rows($result) == 1) {
+         $token = generate_activation_key($mailaddress);
+         #Resend confirmation mail to user
+@@ -60,7 +40,20 @@
+         die();
+     }
+     }
++	
++	#-------------------------------------------------------------------------------------------------------------------------
++	
++    # Check if the passwords match
++    $plain_pw1=$_POST['password1'];
++    $plain_pw2=$_POST['password2'];
+     
++    if (!($plain_pw1==$plain_pw2)) {
++    header(&quot;Location: pws_dont_match.html&quot;);
++    die();
++    }
++    
++	#-------------------------------------------------------------------------------------------------------------------------
++	
+     #If user doesn't exist:
+     
+     #Add new user
+@@ -80,6 +73,8 @@
+     
+     #Initialize the login values
+     #-------------------------------------------------------------------------------------------------------------------------
++	#Get the user's IP
++    $ip=$_SERVER['REMOTE_ADDR'];
+     log_correct_login($mailaddress, $ip);
+     #-------------------------------------------------------------------------------------------------------------------------
+     
+@@ -91,8 +86,10 @@
+     #If we didn't die() up to now, everything was successful
+     
+     #Send confirmation mail to user
+-    send_mail($mailadresse, &quot;register&quot;, &quot;<A HREF="http://newsletters.yacy-forum.de/activate">http://newsletters.yacy-forum.de/activate</A>&quot;, $mailaddress, $ip, $token);
++    #send_mail($mailadresse, &quot;register&quot;, &quot;<A HREF="http://newsletters.yacy-forum.de/activate">http://newsletters.yacy-forum.de/activate</A>&quot;, $mailaddress, $ip, $token);
+     
++	#-------------------------------------------------------------------------------------------------------------------------
++	
+     #Show success
+     header(&quot;Location: success.html&quot;);
+     
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000012.html">[Yane-svn] r26 - / manage/email_and_pwd register
+</A></li>
+	
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#13">[ date ]</a>
+              <a href="thread.html#13">[ thread ]</a>
+              <a href="subject.html#13">[ subject ]</a>
+              <a href="author.html#13">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yane-svn">More information about the Yane-svn
+mailing list</a><br>
+</body></html>
